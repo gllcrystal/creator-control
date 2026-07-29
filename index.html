@@ -563,6 +563,8 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-jump]");if
 
 /* ================= 连接器 ================= */
 function proxyFetch(url,opts={}){const u=cfg.proxy?cfg.proxy+encodeURIComponent(url):url;return fetch(u,opts);}
+/* 滴答专用：直接浏览器请求（不走代理），因为用户在国内可直接访问滴答API */
+function didaFetch(url,opts={}){return fetch(url,opts);}
 function nHeaders(){return{"Authorization":"Bearer "+cfg.notionToken,"Notion-Version":"2022-06-28","Content-Type":"application/json"};}
 /* 提取数据库ID：兼容UUID带横杠(8d69fdea-f3ff-...)、纯32位hex、完整URL */
 function cleanId(raw){if(!raw)return"";const s=String(raw).trim();
@@ -582,7 +584,7 @@ async function notionCreate(key,properties){
 }
 async function didaGet(){
   if(!cfg.didaToken)return null;
-  const r=await proxyFetch("https://api.dida365.com/open/v1/project",{headers:{"Authorization":"Bearer "+cfg.didaToken}});
+  const r=await didaFetch("https://api.dida365.com/open/v1/project",{headers:{"Authorization":"Bearer "+cfg.didaToken}});
   if(!r.ok)throw new Error("Dida "+r.status);
   const j=await r.json();let tasks=[];
   (j.projects||[]).forEach(p=>(p.tasks||[]).forEach(t=>tasks.push(Object.assign({},t,{project:p.name}))));
@@ -590,7 +592,7 @@ async function didaGet(){
 }
 async function didaComplete(id,completed){
   if(!cfg.didaToken){toast("未配置滴答，仅本地标记","⚠️");return false;}
-  await proxyFetch("https://api.dida365.com/open/v1/task/"+id,{method:"POST",headers:{"Authorization":"Bearer "+cfg.didaToken,"Content-Type":"application/json"},body:JSON.stringify({id,status:completed?1:0})});
+  await didaFetch("https://api.dida365.com/open/v1/task/"+id,{method:"POST",headers:{"Authorization":"Bearer "+cfg.didaToken,"Content-Type":"application/json"},body:JSON.stringify({id,status:completed?1:0})});
   return true;
 }
 function pv(p){
@@ -645,7 +647,7 @@ async function loadHome(){
     const today=(tasks||[]).filter(t=>t.dueDate&&String(t.dueDate).slice(0,10)===td&&t.status!==1).slice(0,3);
     top3.innerHTML=today.length?today.map(t=>taskRowHTML(t,"top3")).join(""):emptyState("滴答今日无高优先级任务","配置滴答后可自动聚合今日三件事");
     bindTasks(top3);
-  }catch(e){const msg=e.message||"";const hint=msg.includes("504")||msg.includes("timeout")||msg.includes("Timeout")?"⏱️ 国内 API 从海外服务器访问超时（正常现象）<br>💡 解决方案：在设置里把「数据源代理」改为 Cloudflare Worker 代理地址（见文档），或暂时用「跳转今日清单」直接在滴答 App 里查看":"检查 Token / 代理："+msg;top3.innerHTML=emptyState("滴答连接失败",hint);}
+  }catch(e){const msg=e.message||"";const hint=msg.includes("Failed to fetch")||msg.includes("NetworkError")||msg.includes("TypeError")?"💡 请检查网络连接，或确认滴答 Token 是否有效":"检查 Token："+msg;top3.innerHTML=emptyState("滴答连接失败",hint);}
   goals.innerHTML=emptyState("目标进度需从滴答读取","在设置配置滴答后自动聚合周/月/长期目标");
   energy.innerHTML=emptyState("时间分配需滴答计时数据","配置滴答后展示当日专注分配");
 }
@@ -696,7 +698,7 @@ async function loadTime(){
   if(cfg.sample){const s=[{id:"t1",title:"录制口播（AI工具横评）",status:0,project:"创作"},{id:"t2",title:"剪辑本期成片",status:0,project:"创作"},{id:"t3",title:"阅读《影响力》第3章",status:0,project:"输入"},{id:"t4",title:"发布小红书图文预告",status:0,project:"运营"}];
     tTasks.innerHTML=s.map(t=>taskRowHTML(t,"time")).join("");bindTasks(tTasks);}
   else{try{const tasks=await didaGet();state.tasks=tasks||[];const td=todayStr();const today=(tasks||[]).filter(t=>t.dueDate&&String(t.dueDate).slice(0,10)===td);
-    tTasks.innerHTML=today.length?today.map(t=>taskRowHTML(t,"time")).join(""):emptyState("今日暂无事件","配置滴答后自动聚合");bindTasks(tTasks);}catch(e){const m=e.message||"";tTasks.innerHTML=emptyState("滴答连接失败",m.includes("504")?"⏱️ 国内 API 超时（海外服务器访问较慢）<br>💡 可点下方「跳转今日清单」直接在滴答 App 查看":m);}}
+    tTasks.innerHTML=today.length?today.map(t=>taskRowHTML(t,"time")).join(""):emptyState("今日暂无事件","配置滴答后自动聚合");bindTasks(tTasks);}catch(e){const m=e.message||"";tTasks.innerHTML=emptyState("滴答连接失败",m.includes("Failed to fetch")?"💡 请检查网络或确认 Token 有效":m);}}
   renderHabit();renderTimeView();
 }
 function renderHabit(){
@@ -1135,7 +1137,7 @@ document.getElementById("setTest").onclick=async()=>{
   catch(e){toast("Notion 连接失败："+e.message,"⚠️");}
   // 同时测试滴答
   const dtoken=document.getElementById("cfgDida").value.trim();
-  if(dtoken){try{const dr=await proxyFetch("https://api.dida365.com/open/v1/project",{headers:{"Authorization":"Bearer "+dtoken}});if(dr.ok)toast("滴答连接成功 ✓","✓");else toast("滴答返回 "+dr.status,"⚠️");}catch(e){toast("滴答失败："+e.message,"⚠️");}}
+  if(dtoken){try{const dr=await didaFetch("https://api.dida365.com/open/v1/project",{headers:{"Authorization":"Bearer "+dtoken}});if(dr.ok)toast("滴答连接成功 ✓","✓");else toast("滴答返回 "+dr.status,"⚠️");}catch(e){toast("滴答失败："+e.message,"⚠️");}}
 };
 function updateConn(){
   const nd=document.getElementById("csNotion"),dd=document.getElementById("csDida"),ad=document.getElementById("csAi");
