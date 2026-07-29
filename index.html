@@ -948,7 +948,7 @@ document.getElementById("setSave").onclick=()=>{
 document.getElementById("setTest").onclick=async()=>{
   const token=document.getElementById("cfgToken").value.trim();const pid=document.getElementById("cfgProject").value.trim();
   if(!token||!pid){toast("请先填写 Token 与任一数据库 ID","⚠️");return;}
-  try{const r=await proxyFetch("https://api.notion.com/v1/databases/"+cleanId(pid),{headers:nHeaders()});if(r.ok)toast("Notion 连接成功 ✓","✓");else{let detail="";try{const b=await r.json();detail=b.message||b.code||"";}catch(e){}toast("Notion "+r.status+(detail?"："+detail:"")+"（最常见原因：数据库未共享给集成 → 打开数据库→···→Connections→添加）","⚠️");}}
+  try{const r=await proxyFetch("https://api.notion.com/v1/databases/"+cleanId(pid),{headers:nHeaders()});if(r.ok)toast("Notion 连接成功 ✓","✓");else{let detail="";try{const b=await r.json();detail=": "+JSON.stringify(b).slice(0,400);}catch(e){}toast("Notion "+r.status+detail,"⚠️");}}
   catch(e){toast("Notion 连接失败："+e.message,"⚠️");}
   // 同时测试滴答
   const dtoken=document.getElementById("cfgDida").value.trim();
