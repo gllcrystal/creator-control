@@ -45,6 +45,7 @@
   .sidebar{width:var(--nav-w);flex:0 0 var(--nav-w);background:rgba(255,255,255,0.65);border-right:1px solid rgba(255,255,255,0.5);
     display:flex;flex-direction:column;padding:22px 14px;transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:40;
     backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
+  .sidebar.open{z-index:55;}
   .brand{display:flex;align-items:center;gap:11px;padding:4px 10px 22px;}
   .brand .logo{width:38px;height:38px;border-radius:11px;flex:0 0 38px;background:linear-gradient(135deg,var(--primary),var(--purple));
     display:grid;place-items:center;color:#fff;font-size:19px;box-shadow:0 6px 16px rgba(212,165,184,.35);}
@@ -247,12 +248,14 @@
   .scrim{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:39;display:none;} .scrim.show{display:block;}
 
   @media (max-width:860px){
-    .sidebar{position:fixed;left:0;top:0;bottom:0;box-shadow:var(--shadow-lg);transform:translateX(-100%);}
-    .sidebar.open{transform:none;} .hamburger{display:grid;place-items:center;}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;box-shadow:var(--shadow-lg);transform:translateX(-100%);z-index:55;}
+    .sidebar.open{transform:none;z-index:55;} .hamburger{display:grid;place-items:center;}
     .scroll{padding:16px 12px 24px;} .topbar{padding:0 8px;gap:6px;} .heat{grid-template-columns:repeat(14,1fr);}
     .brand .sub{display:none;} .grid2{grid-template-columns:1fr;}
     .page-title{font-size:18px;}
     .icon-btn{width:36px;height:36px;font-size:16px;border-radius:10px;}
+    /* 侧边栏打开时，主内容区稍微下移避免和侧边栏顶部重叠 */
+    body.sidebar-open .main{pointer-events:none;}
   }
   @media (max-width:480px){ .qbtn{min-width:0;flex:1;padding:0 6px;} .qbtn .qt{font-size:10px;} }
 </style>
@@ -1046,7 +1049,8 @@ const themeBtn=document.getElementById("themeBtn");
 function setTheme(t){document.documentElement.dataset.theme=t;themeBtn.textContent=t==="dark"?"☀️":"🌙";localStorage.setItem("wb-theme",t);}
 setTheme(localStorage.getItem("wb-theme")||"light");themeBtn.onclick=()=>setTheme(document.documentElement.dataset.theme==="dark"?"light":"dark");
 const sidebar=document.getElementById("sidebar"),scrim=document.getElementById("scrim");
-function openSidebar(){sidebar.classList.add("open");scrim.classList.add("show");}function closeSidebar(){sidebar.classList.remove("open");scrim.classList.remove("show");}
+function openSidebar(){sidebar.classList.add("open");scrim.classList.add("show");document.body.classList.add("sidebar-open");}
+function closeSidebar(){sidebar.classList.remove("open");scrim.classList.remove("show");document.body.classList.remove("sidebar-open");}
 document.getElementById("hamburger").onclick=openSidebar;scrim.onclick=closeSidebar;
 
 /* ================= 底部快捷栏 ================= */
