@@ -140,6 +140,15 @@
   .bubble .nt{font-size:14px;font-weight:600;margin-bottom:8px;padding-right:8px;}
   .bubble .nh{display:flex;justify-content:space-between;font-size:11px;color:var(--text-3);margin-bottom:6px;}
 
+  /* 灵感气泡卡片（状态着色 + 浮动布局） */
+  #ideaList{display:flex;flex-wrap:wrap;gap:10px;padding:4px 0;}
+  .idea-bubble{display:inline-flex;flex-direction:column;border-radius:16px 16px 16px 6px;padding:12px 14px 14px;
+    min-width:120px;max-width:200px;transition:.2s;word-break:break-word;}
+  .idea-bubble:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 8px 20px rgba(0,0,0,.10);}
+  .idea-bubble .ib-title{font-size:13.5px;font-weight:650;line-height:1.35;margin-bottom:6px;}
+  .idea-bubble .ib-meta{display:flex;justify-content:space-between;font-size:11px;opacity:.75;}
+  .idea-bubble .ib-st{font-weight:600;}
+
   .btn{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;padding:9px 16px;border-radius:11px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;transition:.16s;}
   .btn:hover{border-color:var(--border-strong);transform:translateY(-1px);}
   .btn.primary{background:linear-gradient(135deg,var(--primary),var(--pink));color:var(--text);border:none;box-shadow:0 6px 16px rgba(255,213,102,.35);}
@@ -733,24 +742,37 @@ document.getElementById("intakeBtn").onclick=async()=>{
 async function loadIdeaList(){
   const box=document.getElementById("ideaList");
   if(cfg.sample){
-    const s=[{title:"用「反常识开头」重做开场钩子",date:"07-28 21:14",st:"脚本",tags:["钩子","口播"]},
-      {title:"周末 vlog 主题：自由职业 100 天",date:"07-27 09:02",st:"视频",tags:["vlog"]},
-      {title:"做一期「AI 帮我读论文」的流程",date:"07-25 14:30",st:"初步想法",tags:["选题"]},
-      {title:"已发布：3 个被低估的效率工具",date:"07-22 18:00",st:"发布",tags:["效率"]}];
-    box.innerHTML=s.map(ideaHTML).join("");return;
+    const s=[{title:"用「反常识开头」重做开场钩子",date:"07-28",st:"进行中",tags:["钩子","口播"]},
+      {title:"周末 vlog 主题：自由职业 100 天",date:"07-27",st:"未开始",tags:["vlog"]},
+      {title:"做一期「AI 帮我读论文」的流程",date:"07-25",st:"已完成",tags:["选题"]},
+      {title:"3 个被低估的效率工具",date:"07-22",st:"已完成",tags:["效率"]}];
+    box.innerHTML=s.map(ideaBubbleHTML).join("");bindIdeaBubbles(box);return;
   }
   try{const res=await notionQuery("idea");if(res===null){box.innerHTML=emptyState("未配置灵感库","在设置填写灵感库 ID");return;}state.ideas=res;
-    const sc={初步想法:"var(--text-3)",脚本:"var(--blue)",视频:"var(--pink)",发布:"var(--teal)",复盘:"var(--coral)"};
-    box.innerHTML=res.length?res.map(p=>{const F=f("idea");const st=pv(p.properties[F.status]);const tags=pv(p.properties[F.tags]);return ideaHTML({title:pv(p.properties[F.title]),date:(pv(p.properties[F.date])||"").slice(0,10),st,tags:Array.isArray(tags)?tags:[tags].filter(Boolean)});}).join(""):emptyState("灵感库暂无条目","底部 ⚡ 快速记录灵感");
+    box.innerHTML=res.length?res.map(p=>{const F=f("idea");const st=pv(p.properties[F.status]);const tags=pv(p.properties[F.tags]);return ideaBubbleHTML({title:pv(p.properties[F.title]),date:(pv(p.properties[F.date])||"").slice(0,10),st,tags:Array.isArray(tags)?tags:[tags].filter(Boolean),pid:p.id});}).join(""):emptyState("灵感库暂无条目","底部 ⚡ 快速记录灵感");
+    bindIdeaBubbles(box);
   }catch(e){box.innerHTML=emptyState("Notion 读取失败",e.message);}
 }
-function ideaHTML(x){
-  const sc={初步想法:"var(--text-3)",脚本:"var(--blue)",视频:"var(--pink)",发布:"var(--teal)",复盘:"var(--coral)"};
-  const c=sc[x.st]||"var(--text-3)";
-  return `<div class="bubble" data-jump="notion" data-target="idea"><span class="st" style="background:${c}22;color:${c}">${esc(x.st||"—")}</span>
-    <div class="mt">${esc(x.title)}</div><div class="meta"><span>🕒 ${esc(x.date||"")}</span></div>
-    <div class="tags">${(x.tags||[]).map(t=>`<span class="tg">#${esc(t)}</span>`).join("")}</div></div>`;
+// 气泡卡片：按状态着色，点击跳具体页面
+function ideaBubbleHTML(x){
+  // 状态→颜色映射（适配 Notion 实际状态值）
+  const stMap={"未开始":{bg:"#f0f0f0",color:"#999",border:"#ddd"},"进行中":{bg:"#fff8e1",color:"#f9a825",border:"#ffd54f"},
+    "已完成":{bg:"#e8f5e9",color:"#2e7d32",border:"#a5d6a7"},"初步想法":{bg:"#f5f5f5",color:"#888",border:"#eee"},
+    "脚本":{bg:"#e3f2fd",color:"#1565c0",border:"#90caf9"},"视频":{bg:"#fce4ec",color:"#c62828",border:"#f48fb1"},
+    "发布":{bg:"#e0f2f1",color:"#00695c",border:"#80cbc4"}};
+  const sc=stMap[x.st]||stMap["未开始"];
+  return `<div class="idea-bubble" data-page-id="${x.pid||''}" style="background:${sc.bg};border:1.5px solid ${sc.border};color:${sc.color};">
+    <div class="ib-title">${esc(x.title||"Untitled")}</div>
+    <div class="ib-meta"><span class="ib-st">${esc(x.st||"—")}</span><span class="ib-date">${esc(x.date||"")}</span></div>
+  </div>`;
 }
+function bindIdeaBubbles(box){box.querySelectorAll('.idea-bubble').forEach(el=>{
+  el.style.cursor="pointer";el.onclick=function(){
+    const pid=this.getAttribute('data-page-id');
+    if(pid)window.open("https://www.notion.so/"+pid.replace(/-/g,''),"_blank");
+    else jump("notion","idea");
+  };
+});}
 
 async function loadDiary(){
   const cal=document.getElementById("cal"),prev=document.getElementById("diaryPreview");
@@ -820,26 +842,41 @@ async function loadProject(){
 }
 async function loadDoing(){
   const box=document.getElementById("doingList");
-  if(cfg.sample){const s=[{title:"AI工具横评 · 第3期",st:"脚本",d:"更新 07-28",tags:["视频","横评"]},{title:"自由职业100天 vlog",st:"视频",d:"拍摄中",tags:["vlog"]},{title:"知识库搭建教程",st:"脚本",d:"大纲完成",tags:["教程"]}];
+  if(cfg.sample){const s=[{title:"AI工具横评 · 第3期",st:"进行中",d:"更新 07-28",tags:["视频","横评"]},{title:"自由职业100天 vlog",st:"进行中",d:"拍摄中",tags:["vlog"]},{title:"知识库搭建教程",st:"进行中",d:"大纲完成",tags:["教程"]}];
     box.innerHTML=s.map(doingHTML).join("");return;}
   try{const res=await notionQuery("project");if(res===null){box.innerHTML=emptyState("未配置项目库","在设置填写项目进度 ID");return;}state.doing=res;
-    const F=f("project");const cat=pv; // category filter 正在进行
-    const items=res.filter(p=>{const st=pv(p.properties[F.stage]);return ["脚本","视频"].includes(st);});
-    box.innerHTML=items.length?items.map(p=>{const tags=pv(p.properties[F.tags]);return doingHTML({title:pv(p.properties[F.title]),st:pv(p.properties[F.stage]),d:"更新 "+(pv(p.properties[F.date])||"").slice(5),tags:Array.isArray(tags)?tags:[tags].filter(Boolean)});}).join(""):emptyState("暂无进行中的项目","灵感转为「脚本」后自动进入");
+    const F=f("project");
+    // 进行中：状态为「进行中」或任何非"未开始/已完成"的活跃状态
+    const items=res.filter(p=>{const st=pv(p.properties[F.stage]);return ["进行中","脚本","视频","初步想法"].includes(st);});
+    box.innerHTML=items.length?items.map(p=>{const tags=pv(p.properties[F.tags]);return doingHTML({title:pv(p.properties[F.title]),st:pv(p.properties[F.stage]),d:"更新 "+(pv(p.properties[F.date])||"").slice(5),tags:Array.isArray(tags)?tags:[tags].filter(Boolean),pid:p.id});}).join(""):emptyState("暂无进行中的项目","灵感转为「进行中」后自动进入");
+    bindDoingCards(box);
   }catch(e){box.innerHTML=emptyState("Notion 读取失败",e.message);}
 }
-function doingHTML(x){const sc={初步想法:"var(--text-3)",脚本:"var(--blue)",视频:"var(--pink)",发布:"var(--teal)",复盘:"var(--coral)"};const c=sc[x.st]||"var(--blue)";
-  return `<div class="mini" data-jump="notion" data-target="project"><span class="st" style="background:${c}22;color:${c}">${esc(x.st||"—")}</span>
-  <div class="mt">${esc(x.title)}</div><div class="meta"><span>📌 ${esc(x.d||"")}</span></div><div class="tags">${(x.tags||[]).map(t=>`<span class="tg">#${esc(t)}</span>`).join("")}</div></div>`;}
+function doingHTML(x){const sc={"未开始":{bg:"#f0f0f0",c:"#999"},"进行中":{bg:"#fff8e1",c:"#f9a825"},
+  "已完成":{bg:"#e8f5e9",c:"#2e7d32"},"初步想法":{bg:"#f5f5f5",c:"#888"},"脚本":{bg:"#e3f2fd",c:"#1565c0"},"视频":{bg:"#fce4ec",c:"#c62828"}};const st=sc[x.st]||sc["未开始"];
+  return `<div class="mini doing-card" data-page-id="${x.pid||''}" style="border-left:3px solid ${st.c};"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+    <span class="st" style="background:${st.bg};color:${st.c};font-size:11px;padding:2px 10px;border-radius:12px;font-weight:600;">${esc(x.st||"—")}</span>
+    <span style="font-size:11px;color:var(--text-3);">${esc(x.d||"")}</span></div>
+    <div class="mt">${esc(x.title)}</div>
+    <div class="tags">${(x.tags||[]).map(t=>`<span class="tg">#${esc(t)}</span>`).join("")}</div></div>`;}
+function bindDoingCards(box){box.querySelectorAll('.doing-card').forEach(el=>{
+  el.style.cursor="pointer";el.onclick=function(){
+    const pid=this.getAttribute('data-page-id');
+    if(pid)window.open("https://www.notion.so/"+pid.replace(/-/g,''),"_blank");
+    else jump("notion","project");
+  };
+});}
 
 async function loadReview(){
   const box=document.getElementById("reviewList");
   if(cfg.sample){const s=[{title:"3个被低估的效率工具",play:"12.4w",like:"8.6k",fav:"5.2k",cmt:"412"},{title:"我用AI重写了工作流",play:"8.1w",like:"5.3k",fav:"3.9k",cmt:"288"},{title:"裸辞做自媒体第30天",play:"23.7w",like:"1.4w",fav:"9.8k",cmt:"1.2k"}];
     state.review=s.map((x,i)=>({i,...x}));box.innerHTML=state.review.map(reviewHTML).join("");bindReviewCards(box);return;}
   try{const res=await notionQuery("project");if(res===null){box.innerHTML=emptyState("未配置项目库","在设置填写项目进度 ID");return;}
-    const F=f("project");const items=res.filter(p=>pv(p.properties[F.stage])==="发布");
-    state.review=items.map((p,i)=>({i,title:pv(p.properties[F.title]),play:pv(p.properties[F.play]),like:pv(p.properties[F.like]),fav:pv(p.properties[F.fav]),cmt:pv(p.properties[F.cmt]),note:pv(p.properties[F.note])}));
-    box.innerHTML=state.review.length?state.review.map(reviewHTML).join(""):emptyState("暂无已发布复盘","发布后自动归入此处");
+    const F=f("project");
+    // 复盘：状态为「已完成」或「发布」的条目
+    const items=res.filter(p=>{const st=pv(p.properties[F.stage]);return ["已完成","发布","复盘"].includes(st);});
+    state.review=items.map((p,i)=>({i,title:pv(p.properties[F.title]),play:pv(p.properties[F.play]),like:pv(p.properties[F.like]),fav:pv(p.properties[F.fav]),cmt:pv(p.properties[F.cmt]),note:pv(p.properties[F.note]),pid:p.id}));
+    box.innerHTML=state.review.length?state.review.map(reviewHTML).join(""):emptyState("暂无已发布复盘","完成后自动归入此处");
     bindReviewCards(box);
   }catch(e){box.innerHTML=emptyState("Notion 读取失败",e.message);}
 }
