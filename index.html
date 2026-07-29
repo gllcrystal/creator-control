@@ -763,13 +763,32 @@ async function loadDiary(){
     cal.querySelectorAll('[data-jump]').forEach(c=>c.onclick=()=>jump("notion","diary"));return;
   }
   try{const res=await notionQuery("diary");if(res===null){cal.innerHTML=emptyState("未配置日记库","在设置填写日记 ID");prev.innerHTML="";return;}state.diary=res;
+    const F=f("diary");
+    // 构建日期→页面ID映射，用于精确跳转
+    const datePageMap={};res.forEach(p=>{const d=pv(p.properties[F.date]);if(d){const iso=d.slice(0,10);datePageMap[iso]=p.id;}});
+    const dates=new Set(Object.keys(datePageMap));
     const wk=["一","二","三","四","五","六","日"];wk.forEach(w=>cal.innerHTML+=`<div class="dhead">${w}</div>`);
-    const dates=new Set(res.map(p=>{const d=pv(p.properties[f("diary").date]);return d?d.slice(0,10):null;}).filter(Boolean));
     const now=new Date();const y=now.getFullYear(),m=now.getMonth();const dim=new Date(y,m+1,0).getDate();
     for(let d=1;d<=dim;d++){const iso=`${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;const today=iso===todayStr();const has=dates.has(iso);
-      cal.innerHTML+=`<div class="d ${today?'today':''} ${has?'has':''}" data-jump="notion" data-target="diary">${d}</div>`;}
-    cal.querySelectorAll('[data-jump]').forEach(c=>c.onclick=()=>jump("notion","diary"));
-    const F=f("diary");const last=res[0];prev.innerHTML=last?`<b>${pv(last.properties[F.date])||""}</b><br>${esc(pv(last.properties[F.body])||"（无内容）").slice(0,160)}`:emptyState("本月暂无日记","点击右上角新建日记");
+      const pid=datePageMap[iso]||"";
+      cal.innerHTML+=`<div class="d ${today?'today':''} ${has?'has':''}" data-page-id="${pid}" title="${has?'查看当日日记':''}">${d}</div>`;}
+    // 点击日历格子 → 跳转到该天具体的 Notion 页面
+    cal.querySelectorAll('.d.has,.d.today').forEach(el=>{
+      el.style.cursor="pointer";el.onclick=function(){const pid=this.getAttribute('data-page-id');if(pid)window.open("https://www.notion.so/"+pid.replace(/-/g,''),"_blank");else jump("notion","diary");};
+    });
+    // 预览：聚合多个关键字段生成摘要（不再只取单一 body 字段）
+    const last=res[0];
+    if(last){
+      const lp=last.properties;
+      const parts=[];
+      const theme=pv(lp["当下主题"]);if(parts.push(theme));
+      const action=pv(lp["之后最小行动"]);if(action&&action!==theme)parts.push(action);
+      const out=pv(lp[F.body]||lp["输出"]);if(out)parts.push(out);
+      const inp=pv(lp["输入"]);if(inp)parts.push(inp);
+      const mood=pv(lp["整体质感"]);if(mood)parts.unshift("🎯 "+mood);
+      const summary=parts.filter(Boolean).join(" · ").slice(0,220);
+      prev.innerHTML=`<b>${pv(lp[F.date])||""}</b><br>${esc(summary)||"（暂无内容）"}`;
+    } else {prev.innerHTML=emptyState("本月暂无日记","点击右下角新建日记");}
   }catch(e){cal.innerHTML=emptyState("Notion 读取失败",e.message);}
 }
 
