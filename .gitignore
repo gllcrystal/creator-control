@@ -1,0 +1,7 @@
+# 本地预览截图（非必需，不传）
+preview-*.png
+
+# 系统/缓存
+.DS_Store
+node_modules/
+*.log

@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#FFD56B" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="创作中控台" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" href="icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="icon.svg" />
+<title>创作者中控工作台 · Creator Control</title>
+<style>
+  :root{
+    --bg:#F6F7F9;--bg-grad:radial-gradient(1200px 600px at 80% -10%,#EEF1FF 0%,rgba(238,241,255,0) 60%),radial-gradient(1000px 500px at -10% 10%,#FFF1F6 0%,rgba(255,241,246,0) 55%);
+    --surface:#FFFFFF;--surface-2:#FAFBFC;--surface-hover:#F0F2F5;
+    --border:#E8EAEE;--border-strong:#DADDE3;
+    --text:#14161A;--text-2:#5B616E;--text-3:#9AA0AB;
+    --shadow:0 6px 24px rgba(20,22,26,.06),0 1px 2px rgba(20,22,26,.04);
+    --shadow-lg:0 18px 48px rgba(20,22,26,.14);
+    --radius:18px;--radius-sm:12px;--nav-w:232px;--quickbar-h:68px;
+    --coral:#FF6B6B;--purple:#7C5CFC;--teal:#12B886;--yellow:#FCC419;--blue:#4DABF7;--pink:#F06595;--green:#51CF66;
+    --primary:#FFD56B;--primary-ink:#B5841A;
+  }
+  [data-theme="dark"]{
+    --bg:#0E0F13;--bg-grad:radial-gradient(1200px 600px at 80% -10%,#1B1740 0%,rgba(27,23,64,0) 60%),radial-gradient(1000px 500px at -10% 10%,#2A1622 0%,rgba(42,22,34,0) 55%);
+    --surface:#181A21;--surface-2:#1E212A;--surface-hover:#23262F;
+    --border:#2A2E38;--border-strong:#363B47;
+    --text:#ECEEF2;--text-2:#A8AEBB;--text-3:#6B7280;
+    --shadow:0 6px 24px rgba(0,0,0,.35),0 1px 2px rgba(0,0,0,.4);
+    --shadow-lg:0 20px 56px rgba(0,0,0,.55);
+    --primary-ink:#E7B94B;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  button,.btn,.qbtn,.nav-item,.tab,.task,.bubble,.pf-btn,.cal .d,.heat .cell{touch-action:manipulation;}
+  html,body{height:100%;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);background-image:var(--bg-grad);background-attachment:fixed;color:var(--text);line-height:1.55;
+    -webkit-font-smoothing:antialiased;overflow:hidden;transition:background-color .3s,color .3s;}
+  ::-webkit-scrollbar{width:9px;height:9px;}::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:9px;}::-webkit-scrollbar-track{background:transparent;}
+
+  .app{display:flex;height:100vh;padding-bottom:calc(var(--quickbar-h) + env(safe-area-inset-bottom));}
+  .sidebar{width:var(--nav-w);flex:0 0 var(--nav-w);background:var(--surface);border-right:1px solid var(--border);
+    display:flex;flex-direction:column;padding:22px 14px;transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:40;}
+  .brand{display:flex;align-items:center;gap:11px;padding:4px 10px 22px;}
+  .brand .logo{width:38px;height:38px;border-radius:11px;flex:0 0 38px;background:linear-gradient(135deg,var(--primary),var(--pink));
+    display:grid;place-items:center;color:var(--text);font-size:19px;box-shadow:0 6px 16px rgba(255,213,102,.4);}
+  .brand .name{font-weight:700;font-size:15.5px;letter-spacing:.2px;} .brand .sub{font-size:11px;color:var(--text-3);margin-top:1px;}
+  .nav{display:flex;flex-direction:column;gap:4px;flex:1;}
+  .nav-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:13px;cursor:pointer;color:var(--text-2);
+    font-size:14.5px;font-weight:550;border:1px solid transparent;transition:.18s;position:relative;user-select:none;}
+  .nav-item .ico{font-size:18px;width:22px;text-align:center;}
+  .nav-item:hover{background:var(--surface-hover);color:var(--text);}
+  .nav-item.active{background:linear-gradient(135deg,rgba(255,213,107,.18),rgba(240,101,149,.12));color:var(--text);border-color:rgba(255,213,107,.35);}
+  .nav-item.active::before{content:"";position:absolute;left:-14px;top:50%;transform:translateY(-50%);width:4px;height:22px;border-radius:0 4px 4px 0;background:linear-gradient(var(--primary),var(--pink));}
+  .nav-sep{height:1px;background:var(--border);margin:14px 8px;}
+  .nav-foot{margin-top:auto;padding:10px;}
+  .conn-status{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-3);padding:9px 12px;border-radius:11px;background:var(--surface-2);border:1px solid var(--border);}
+  .conn-status.off{color:var(--text-3);} .conn-status.on{color:var(--teal);}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--text-3);} .dot.on{background:var(--teal);box-shadow:0 0 0 3px rgba(18,184,134,.18);} .dot.warn{background:var(--yellow);box-shadow:0 0 0 3px rgba(252,196,25,.18);}
+
+  .main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;}
+  .topbar{height:62px;flex:0 0 62px;display:flex;align-items:center;gap:14px;padding:0 26px;border-bottom:1px solid var(--border);
+    background:color-mix(in srgb,var(--surface) 78%,transparent);backdrop-filter:blur(14px);}
+  .hamburger{display:none;width:40px;height:40px;border-radius:11px;border:1px solid var(--border);background:var(--surface);font-size:20px;cursor:pointer;color:var(--text);}
+  .page-title{font-size:18px;font-weight:700;} .page-title small{font-weight:500;color:var(--text-3);font-size:12.5px;margin-left:9px;}
+  .topbar .spacer{flex:1;}
+  .ro-status{font-size:12.5px;color:var(--text-2);display:flex;align-items:center;gap:7px;}
+  .icon-btn{width:42px;height:42px;border-radius:12px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:18px;display:grid;place-items:center;color:var(--text-2);transition:.18s;}
+  .icon-btn:hover{background:var(--surface-hover);color:var(--text);transform:translateY(-1px);}
+  .scroll{flex:1;overflow-y:auto;padding:26px 30px 34px;}
+  .view{display:none;animation:fade .35s ease;} .view.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+  .grid{display:grid;gap:18px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;box-shadow:var(--shadow);}
+  .card h3{font-size:15px;font-weight:700;display:flex;align-items:center;gap:9px;margin-bottom:4px;}
+  .card .desc{font-size:12.5px;color:var(--text-3);margin-bottom:14px;}
+  .tag-ico{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:14px;color:#fff;}
+  .row{display:flex;align-items:center;gap:12px;}
+
+  .quote-card{background:linear-gradient(120deg,var(--primary),var(--pink));color:var(--text);border:none;position:relative;overflow:hidden;}
+  .quote-card::after{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;background:rgba(255,255,255,.12);border-radius:50%;}
+  .quote-card .q{font-size:19px;font-weight:600;line-height:1.5;max-width:80%;position:relative;z-index:1;}
+  .quote-card .src{margin-top:12px;font-size:13px;opacity:.85;position:relative;z-index:1;}
+  .quote-card .qmark{position:absolute;right:22px;bottom:6px;font-size:90px;opacity:.18;font-family:Georgia,serif;}
+
+  .todo-row{display:flex;align-items:center;gap:13px;padding:13px 14px;border-radius:13px;background:var(--surface-2);border:1px solid var(--border);margin-bottom:10px;}
+  .todo-row:last-child{margin-bottom:0;}
+  .check{width:22px;height:22px;border-radius:7px;border:2px solid var(--border-strong);flex:0 0 22px;display:grid;place-items:center;font-size:13px;color:#fff;transition:.2s;}
+  .check.done{background:var(--teal);border-color:var(--teal);}
+  .todo-row .t{flex:1;font-size:14px;} .todo-row .t s{color:var(--text-3);}
+  .pill{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600;white-space:nowrap;}
+
+  .prog{margin-bottom:16px;} .prog:last-child{margin-bottom:0;}
+  .prog .top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:7px;} .prog .top b{font-weight:700;}
+  .bar{height:10px;border-radius:10px;background:var(--surface-hover);overflow:hidden;} .bar > i{display:block;height:100%;border-radius:10px;background:linear-gradient(90deg,var(--blue),var(--primary));}
+
+  .donut-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap;}
+  .donut{width:130px;height:130px;border-radius:50%;flex:0 0 130px;position:relative;} .donut::after{content:"";position:absolute;inset:22px;border-radius:50%;background:var(--surface);}
+  .donut .mid{position:absolute;inset:0;display:grid;place-items:center;z-index:1;text-align:center;} .donut .mid b{font-size:20px;} .donut .mid span{font-size:11px;color:var(--text-3);}
+  .legend{display:flex;flex-direction:column;gap:9px;font-size:13px;flex:1;min-width:160px;}
+  .legend .li{display:flex;align-items:center;gap:9px;} .legend .sw{width:11px;height:11px;border-radius:4px;}
+
+  .heat{display:grid;grid-template-columns:repeat(20,1fr);gap:5px;} .heat .cell{aspect-ratio:1;border-radius:4px;background:var(--surface-hover);cursor:pointer;transition:.12s;}
+  .heat .cell:hover{outline:2px solid var(--teal);} .heat .cell.l1{background:rgba(18,184,134,.28);} .heat .cell.l2{background:rgba(18,184,134,.52);} .heat .cell.l3{background:rgba(18,184,134,.78);} .heat .cell.l4{background:var(--teal);}
+
+  .tl{display:flex;flex-direction:column;gap:11px;} .tl .it{display:flex;align-items:center;gap:11px;font-size:13px;cursor:pointer;} .tl .it:hover .nm{color:var(--primary);}
+  .tl .it .nm{width:84px;flex:0 0 84px;color:var(--text-2);transition:.15s;} .tl .it .bx{flex:1;height:9px;border-radius:9px;background:var(--surface-hover);overflow:hidden;}
+  .tl .it .bx > i{display:block;height:100%;border-radius:9px;} .tl .it .vl{width:42px;text-align:right;color:var(--text-3);font-size:12px;}
+
+  .task-list{display:flex;flex-direction:column;gap:9px;}
+  .task{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:11px;background:var(--surface-2);border:1px solid var(--border);cursor:pointer;transition:.15s;touch-action:none;user-select:none;}
+  .task:hover{border-color:var(--border-strong);} .task.done{opacity:.6;}
+  .task .tt{flex:1;font-size:13.5px;} .task .tstate{color:var(--text-3);font-size:13px;}
+  .lb{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;}
+  .long-hint{font-size:11px;color:var(--text-3);margin-top:8px;}
+
+  .mini-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;}
+  .mini{background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:15px 16px;cursor:pointer;transition:.16s;position:relative;}
+  .mini:hover{border-color:var(--primary);transform:translateY(-2px);box-shadow:var(--shadow);}
+  .mini .mt{font-size:14px;font-weight:650;margin-bottom:6px;line-height:1.4;}
+  .mini .meta{font-size:11.5px;color:var(--text-3);display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .mini .st{position:absolute;top:14px;right:14px;font-size:10.5px;padding:2px 8px;border-radius:20px;font-weight:600;}
+  .mini .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;} .mini .tags .tg{font-size:10.5px;padding:2px 7px;border-radius:6px;background:var(--surface-hover);color:var(--text-2);}
+
+  /* 灵感气泡 🫧 */
+  .bubble-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:22px 18px;}
+  .bubble{position:relative;background:linear-gradient(160deg,var(--surface),var(--surface-2));border:1.5px solid var(--border);
+    border-radius:26px 26px 26px 8px;padding:16px 18px 18px;cursor:pointer;transition:.2s;overflow:hidden;}
+  .bubble:hover{border-color:var(--primary);transform:translateY(-4px) scale(1.02);box-shadow:0 12px 28px rgba(255,213,102,.28);}
+  .bubble::before{content:"🫧";position:absolute;right:8px;bottom:4px;font-size:34px;opacity:.10;pointer-events:none;}
+  .bubble .mt{font-size:14px;font-weight:650;line-height:1.45;margin-bottom:8px;padding-right:54px;}
+  .bubble .meta{font-size:11.5px;color:var(--text-3);display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .bubble .st{position:absolute;top:14px;right:14px;font-size:10.5px;padding:3px 10px;border-radius:20px;font-weight:600;z-index:1;}
+  .bubble .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px;} .bubble .tags .tg{font-size:10.5px;padding:3px 9px;border-radius:20px;background:var(--surface-hover);color:var(--text-2);}
+  .bubble .nt{font-size:14px;font-weight:600;margin-bottom:8px;padding-right:8px;}
+  .bubble .nh{display:flex;justify-content:space-between;font-size:11px;color:var(--text-3);margin-bottom:6px;}
+
+  .btn{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;padding:9px 16px;border-radius:11px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;transition:.16s;}
+  .btn:hover{border-color:var(--border-strong);transform:translateY(-1px);}
+  .btn.primary{background:linear-gradient(135deg,var(--primary),var(--pink));color:var(--text);border:none;box-shadow:0 6px 16px rgba(255,213,102,.35);}
+  .btn.primary:hover{filter:brightness(1.05);} .btn.ghost{background:transparent;} .btn.sm{padding:6px 12px;font-size:12px;}
+  .ext{font-size:11px;opacity:.7;}
+  .jump-hint{font-size:11.5px;color:var(--text-3);display:flex;align-items:center;gap:6px;margin-top:14px;flex-wrap:wrap;}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tab{font-size:13px;padding:7px 15px;border-radius:10px;cursor:pointer;color:var(--text-2);border:1px solid var(--border);background:var(--surface);transition:.15s;font-weight:550;}
+  .tab.active{background:var(--text);color:var(--surface);border-color:var(--text);}
+  .subsec{margin-bottom:26px;} .subsec > .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;gap:10px;flex-wrap:wrap;}
+  .subsec > .head h3{font-size:16px;font-weight:700;display:flex;align-items:center;gap:9px;}
+
+  .import-row{display:flex;gap:9px;margin-bottom:14px;flex-wrap:wrap;}
+  .import-row input{flex:1;min-width:200px;padding:10px 14px;border-radius:11px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:13px;outline:none;}
+  .import-row input:focus{border-color:var(--primary);}
+  .pf-group{display:flex;gap:6px;} .pf-btn{font-size:12px;padding:7px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);cursor:pointer;color:var(--text-2);font-weight:600;transition:.15s;}
+  .pf-btn.active{background:var(--primary);color:var(--text);border-color:var(--primary);}
+
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;max-width:340px;} .cal .d{aspect-ratio:1;border-radius:9px;background:var(--surface-2);border:1px solid var(--border);display:grid;place-items:center;font-size:12px;color:var(--text-2);position:relative;cursor:pointer;}
+  .cal .d:hover{border-color:var(--primary);} .cal .d.today{border-color:var(--primary-ink);color:var(--primary-ink);font-weight:700;}
+  .cal .d.has::after{content:"";position:absolute;bottom:5px;width:5px;height:5px;border-radius:50%;background:var(--coral);}
+  .cal .dhead{font-size:11px;color:var(--text-3);display:grid;place-items:center;font-weight:600;}
+
+  .news-head{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
+  .news-badge{font-size:11px;padding:3px 10px;border-radius:20px;background:linear-gradient(135deg,var(--primary),var(--pink));color:#fff;font-weight:600;}
+  .news-item{border-left:3px solid var(--primary);padding:10px 14px;background:var(--surface-2);border-radius:0 12px 12px 0;margin-bottom:10px;}
+  .news-item .nh{display:flex;justify-content:space-between;font-size:11px;color:var(--text-3);margin-bottom:4px;}
+  .news-item .nt{font-size:14px;font-weight:600;margin-bottom:6px;}
+  .news-item .tags{display:flex;gap:6px;flex-wrap:wrap;} .news-item .tg{font-size:10.5px;padding:2px 7px;border-radius:6px;background:var(--surface-hover);color:var(--text-2);}
+
+  .empty{text-align:center;padding:48px 20px;color:var(--text-3);}
+  .empty .ei{font-size:42px;margin-bottom:12px;opacity:.6;}
+  .empty .et{font-size:14px;margin-bottom:6px;color:var(--text-2);}
+  .empty .es{font-size:12.5px;margin-bottom:16px;}
+
+  /* 底部快捷栏 */
+  .quickbar{position:fixed;bottom:0;left:0;right:0;min-height:var(--quickbar-h);background:color-mix(in srgb,var(--surface) 90%,transparent);backdrop-filter:blur(16px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:center;gap:12px;padding:0 16px;padding-bottom:env(safe-area-inset-bottom);z-index:50;}
+  .qbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:74px;height:52px;padding:0 14px;border-radius:14px;cursor:pointer;border:1px solid transparent;background:transparent;color:var(--text-2);transition:.16s;}
+  .qbtn:hover{background:var(--surface-hover);color:var(--text);}
+  .qbtn .qi{font-size:21px;line-height:1;} .qbtn .qt{font-size:11px;font-weight:600;}
+  .qbtn.primary{background:linear-gradient(135deg,var(--primary),var(--pink));color:var(--text);} .qbtn.primary:hover{filter:brightness(1.04);color:var(--text);}
+
+  /* 弹层 */
+  .overlay{position:fixed;inset:0;background:rgba(10,12,16,.5);backdrop-filter:blur(3px);z-index:60;display:none;} .overlay.show{display:block;}
+  .modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.96);width:min(460px,92vw);background:var(--surface);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow-lg);z-index:70;padding:22px;display:none;opacity:0;transition:.22s;max-height:88vh;overflow-y:auto;}
+  .modal.show{display:block;opacity:1;transform:translate(-50%,-50%) scale(1);}
+  .modal h4{font-size:16px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+  .modal .mdesc{font-size:12.5px;color:var(--text-3);margin-bottom:16px;}
+  .modal input,.modal textarea{width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:13px;outline:none;font-family:inherit;resize:none;}
+  .modal input:focus,.modal textarea:focus{border-color:var(--primary);}
+  .modal .mactions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;}
+  .field{margin-bottom:13px;} .field label{display:block;font-size:12.5px;color:var(--text-2);margin-bottom:6px;font-weight:600;}
+  .field.chk{display:flex;align-items:center;gap:8px;} .field.chk label{margin:0;font-weight:500;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;}
+  details{margin-top:6px;} summary{cursor:pointer;font-size:12.5px;color:var(--primary-ink);font-weight:600;margin-bottom:8px;}
+
+  .drawer{position:fixed;top:0;right:0;bottom:0;width:min(420px,94vw);background:var(--surface);border-left:1px solid var(--border);box-shadow:var(--shadow-lg);z-index:70;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;}
+  .drawer.show{transform:none;}
+  .drawer .dh{display:flex;align-items:center;gap:10px;padding:18px 20px;border-bottom:1px solid var(--border);}
+  .drawer .dh .nm{font-weight:700;font-size:15px;flex:1;} .drawer .dh .badge{font-size:11px;padding:3px 9px;border-radius:20px;background:rgba(124,92,252,.15);color:var(--primary);font-weight:600;}
+  .chat{display:flex;flex-direction:column;flex:1;min-height:0;}
+  .chat-body{flex:1;overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:12px;}
+  .msg{max-width:84%;padding:11px 14px;border-radius:14px;font-size:13.5px;line-height:1.5;} .msg.ai{background:var(--surface-2);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:4px;} .msg.me{background:linear-gradient(135deg,var(--primary),var(--pink));color:#fff;align-self:flex-end;border-bottom-right-radius:4px;}
+  .msg .ctx{font-size:10.5px;opacity:.7;margin-bottom:4px;display:flex;gap:6px;flex-wrap:wrap;}
+  .msg.ai.typing{opacity:.6;} .msg.ai.typing::after{content:"";display:inline-block;width:6px;height:6px;margin-left:4px;border-radius:50%;background:var(--text-3);vertical-align:middle;animation:blink 1s infinite;} @keyframes blink{0%,100%{opacity:.2;}50%{opacity:1;}}
+  .chat-input{display:flex;gap:9px;padding:14px 16px;border-top:1px solid var(--border);}
+  .chat-input input{flex:1;padding:11px 14px;border-radius:12px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);outline:none;font-size:13.5px;}
+  .chat-input input:focus{border-color:var(--primary);}
+  .ctx-chips{display:flex;gap:6px;padding:10px 16px 0;flex-wrap:wrap;} .ctx-chips .cc{font-size:10.5px;padding:3px 9px;border-radius:20px;background:var(--surface-2);border:1px solid var(--border);color:var(--text-2);}
+
+  .toast-wrap{position:fixed;bottom:calc(var(--quickbar-h) + 16px);left:50%;transform:translateX(-50%);z-index:90;display:flex;flex-direction:column;gap:8px;align-items:center;}
+  .toast{background:var(--text);color:var(--surface);font-size:13px;padding:11px 18px;border-radius:12px;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:9px;animation:tin .25s ease;max-width:90vw;}
+  .toast .ti{font-size:15px;} @keyframes tin{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+  .scrim{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:39;display:none;} .scrim.show{display:block;}
+
+  @media (max-width:860px){
+    .sidebar{position:fixed;left:0;top:0;bottom:0;box-shadow:var(--shadow-lg);transform:translateX(-100%);}
+    .sidebar.open{transform:none;} .hamburger{display:grid;place-items:center;}
+    .scroll{padding:18px 16px 28px;} .topbar{padding:0 16px;} .heat{grid-template-columns:repeat(14,1fr);}
+    .brand .sub{display:none;} .page-title small{display:none;} .grid2{grid-template-columns:1fr;}
+  }
+  @media (max-width:480px){ .qbtn{min-width:0;flex:1;padding:0 6px;} .qbtn .qt{font-size:10px;} }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><div class="logo">◈</div><div><div class="name">创作者中控台</div><div class="sub">Creator Control · 只读聚合网关</div></div></div>
+    <nav class="nav" id="nav">
+      <div class="nav-item active" data-view="home"><span class="ico">🏠</span>主页 · 全局仪表盘</div>
+      <div class="nav-item" data-view="time"><span class="ico">⏱️</span>时间与事件管理</div>
+      <div class="nav-item" data-view="idea"><span class="ico">💡</span>灵感收集中枢</div>
+      <div class="nav-item" data-view="project"><span class="ico">📊</span>自媒体项目进度</div>
+      <div class="nav-item" data-view="learn"><span class="ico">📚</span>学以致用</div>
+    </nav>
+    <div class="nav-sep"></div>
+    <div class="nav-foot">
+      <div class="conn-status off" id="csDida"><span class="dot"></span><span>滴答清单 · 未配置</span></div>
+      <div class="conn-status off" id="csNotion" style="margin-top:8px;"><span class="dot"></span><span>Notion · 未配置</span></div>
+      <div class="conn-status off" id="csAi" style="margin-top:8px;"><span class="dot"></span><span>AI 对话 · 未配置</span></div>
+    </div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger" id="hamburger">☰</button>
+      <div class="page-title" id="pageTitle">主页<small>全局仪表盘</small></div>
+      <div class="spacer"></div>
+      <div class="ro-status" id="roStatus"><span class="dot"></span>数据只读 · 实时聚合</div>
+      <button class="icon-btn" id="refreshBtn" title="刷新当前页数据">🔄</button>
+      <button class="icon-btn" id="themeBtn" title="切换深浅色">🌙</button>
+      <button class="icon-btn" id="setBtn" title="数据源配置">⚙️</button>
+    </header>
+
+    <div class="scroll">
+      <!-- 主页 -->
+      <section class="view active" id="view-home">
+        <div class="grid" style="grid-template-columns:1fr;margin-bottom:18px;">
+          <div class="card quote-card" id="quoteCard">
+            <div class="q" id="quoteText"></div><div class="src" id="quoteSrc"></div><div class="qmark">”</div>
+          </div>
+        </div>
+        <div class="grid" style="grid-template-columns:1.4fr 1fr;margin-bottom:18px;">
+          <div class="card">
+            <h3><span class="tag-ico" style="background:var(--coral)">🔥</span>今日最重要三件事</h3>
+            <div class="desc">自动读取滴答「今日」任务聚合 · 点击标记完成，长按跳转滴答计时</div>
+            <div id="top3"></div>
+            <div class="jump-hint">✎ 修改 / 拖拽排序请前往滴答清单 → <button class="btn sm ghost" data-jump="dida" data-target="today">跳转今日清单 ↗</button></div>
+          </div>
+          <div class="card">
+            <h3><span class="tag-ico" style="background:var(--yellow)">🎯</span>目标进度</h3>
+            <div class="desc">周 / 月 / 长期目标聚合预览</div>
+            <div id="goals"></div>
+            <div class="jump-hint">✎ 目标调整跳转滴答目标页 → <button class="btn sm ghost" data-jump="dida" data-target="goal">跳转目标 ↗</button></div>
+          </div>
+        </div>
+        <div class="grid" style="grid-template-columns:1fr;">
+          <div class="card">
+            <h3><span class="tag-ico" style="background:var(--blue)">⚡</span>当日能量概览</h3>
+            <div class="desc">数据源：滴答计时数据 · 当日时间分配简易统计</div>
+            <div id="energy"></div>
+            <div class="jump-hint">✎ 计时 / 统计明细跳转滴答时间页 → <button class="btn sm ghost" data-jump="dida" data-target="timer">跳转时间统计 ↗</button></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 时间与事件 -->
+      <section class="view" id="view-time">
+        <div class="tabs" data-tabs>
+          <div class="tab active" data-tab="today">今日事件</div>
+          <div class="tab" data-tab="habit">习惯 & 事件</div>
+          <div class="tab" data-tab="view">时间视图</div>
+        </div>
+        <div data-panel="today">
+          <div class="subsec">
+            <div class="head"><h3>📅 今日事件概览</h3><button class="btn sm" data-jump="dida" data-target="today">在滴答新建任务 ↗</button></div>
+            <div class="card"><div class="task-list" id="todayTasks"></div>
+              <div class="long-hint">💡 提示：单击任务 = 标记完成（同步滴答）；长按任务 = 跳转滴答计时</div>
+            </div>
+          </div>
+        </div>
+        <div data-panel="habit" style="display:none;">
+          <div class="grid" style="grid-template-columns:1fr 1fr;">
+            <div class="card">
+              <h3><span class="tag-ico" style="background:var(--teal)">🔥</span>打卡热力图</h3>
+              <div class="desc">点击任意格 → 跳转滴答习惯页维护</div>
+              <div class="heat" id="heat"></div>
+              <div class="jump-hint">✎ 习惯维护跳转滴答习惯页 → <button class="btn sm ghost" data-jump="dida" data-target="habit">跳转习惯 ↗</button></div>
+            </div>
+            <div class="card">
+              <h3><span class="tag-ico" style="background:var(--primary)">🏷️</span>标签耗时占比</h3>
+              <div class="desc">点击行 → 跳转滴答时间统计</div>
+              <div class="tl" id="tagList"></div>
+            </div>
+          </div>
+        </div>
+        <div data-panel="view" style="display:none;">
+          <div class="card">
+            <h3><span class="tag-ico" style="background:var(--blue)">📊</span>日 / 周 / 月 时间分配看板</h3>
+            <div class="desc">点击行 → 跳转滴答时间统计</div>
+            <div class="tl" id="timeView"></div>
+            <div class="jump-hint">✎ 计时调整跳转滴答时间页 → <button class="btn sm ghost" data-jump="dida" data-target="timer">跳转时间统计 ↗</button></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 灵感中枢 -->
+      <section class="view" id="view-idea">
+        <div class="tabs" data-tabs>
+          <div class="tab active" data-tab="intake">📰 信息摄入 · Newsletter</div>
+          <div class="tab" data-tab="idea">✨ 灵光一现</div>
+          <div class="tab" data-tab="diary">📓 每日日记</div>
+        </div>
+        <div data-panel="intake">
+          <div class="subsec">
+            <div class="head">
+              <div class="news-head"><span class="news-badge">NEWSLETTER</span><h3 style="margin:0;">我的行业情报</h3></div>
+              <button class="btn sm" data-jump="notion" data-target="intake">打开 Notion 信息摄入库 ↗</button>
+            </div>
+            <div class="card">
+              <div class="import-row">
+                <input id="intakeInput" placeholder="粘贴 小红书 / GitHub 链接，自动扒取并打 AI·内容 类标签" />
+                <div class="pf-group">
+                  <button class="pf-btn active" id="pfXhs" data-pf="小红书">小红书</button>
+                  <button class="pf-btn" id="pfGh" data-pf="GitHub">GitHub</button>
+                </div>
+                <button class="btn primary sm" id="intakeBtn">扒取</button>
+              </div>
+              <div class="bubble-grid" id="intakeList"></div>
+            </div>
+          </div>
+        </div>
+        <div data-panel="idea" style="display:none;">
+          <div class="subsec">
+            <div class="head"><h3>✨ 灵光一现概览</h3><button class="btn sm" data-jump="notion" data-target="idea">打开 Notion 灵感库 ↗</button></div>
+            <div class="card"><div class="bubble-grid" id="ideaList"></div>
+              <div class="jump-hint">⚙ 自动化：灵感状态改为「脚本」→ 自动同步至 Notion「项目进度-正在进行」库</div>
+            </div>
+          </div>
+        </div>
+        <div data-panel="diary" style="display:none;">
+          <div class="subsec">
+            <div class="head"><h3>📓 每日日记概览</h3><button class="btn sm" data-jump="notion" data-target="diary">新建 / 编辑日记 ↗</button></div>
+            <div class="grid" style="grid-template-columns:auto 1fr;">
+              <div class="card"><h3 style="font-size:14px;">本月日历</h3><div class="cal" id="cal"></div></div>
+              <div class="card"><h3 style="font-size:14px;">今日日记预览</h3><div class="desc">摘要预览（完整撰写跳转 Notion 日记模板）</div><div id="diaryPreview" style="font-size:13.5px;color:var(--text-2);line-height:1.7;"></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 项目进度 -->
+      <section class="view" id="view-project">
+        <div class="tabs" data-tabs>
+          <div class="tab active" data-tab="doing">正在进行</div>
+          <div class="tab" data-tab="review">发布复盘</div>
+        </div>
+        <div data-panel="doing">
+          <div class="subsec">
+            <div class="head"><h3>🚀 正在进行</h3><button class="btn sm" data-jump="notion" data-target="project">打开 Notion 项目库 ↗</button></div>
+            <div class="mini-grid" id="doingList"></div>
+          </div>
+        </div>
+        <div data-panel="review" style="display:none;">
+          <div class="subsec">
+            <div class="head"><h3>📈 发布复盘</h3><button class="btn sm" data-jump="notion" data-target="project">编辑复盘笔记 ↗</button></div>
+            <div class="mini-grid" id="reviewList"></div>
+            <div class="jump-hint">👆 点击任意已发布视频卡片 → 查看完整数据展示页</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 学以致用 -->
+      <section class="view" id="view-learn">
+        <div class="subsec">
+          <div class="head"><h3>🔬 爆款拆解预览</h3><button class="btn sm" data-jump="notion" data-target="breakdown">打开 Notion 爆款拆解库 ↗</button></div>
+          <div class="card">
+            <div class="import-row">
+              <input id="bdInput" placeholder="粘贴短视频 / 小红书 链接，AI 自动拆解结构、钩子、节奏" />
+              <button class="btn primary sm" id="bdBtn">导入并拆解</button>
+            </div>
+            <div id="bdList"></div>
+          </div>
+        </div>
+        <div class="subsec">
+          <div class="head"><h3>🧠 AI 应用知识库预览</h3><button class="btn sm" data-jump="notion" data-target="kb">打开 Notion 知识库 ↗</button></div>
+          <div class="mini-grid" id="kbList"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<!-- 底部快捷栏 -->
+<div class="quickbar">
+  <div class="qbtn primary" id="qIdea"><span class="qi">⚡</span><span class="qt">灵光一现</span></div>
+  <div class="qbtn" id="qDiary"><span class="qi">📝</span><span class="qt">新建日记</span></div>
+  <div class="qbtn" id="qTimer"><span class="qi">⏲️</span><span class="qt">计时器</span></div>
+  <div class="qbtn" id="qAI"><span class="qi">🤖</span><span class="qt">唤起 AI</span></div>
+</div>
+
+<!-- 灵感录入弹层 -->
+<div class="overlay" id="ovInsp"></div>
+<div class="modal" id="mInsp">
+  <h4>⚡ 灵光一现</h4>
+  <div class="mdesc">极简单行轻量录入 · 自动同步写入 Notion 灵感库（工作台不留存副本）</div>
+  <input id="inspInput" placeholder="一句话记录此刻灵感…" maxlength="120" />
+  <div class="mactions"><button class="btn sm" id="inspCancel">取消</button><button class="btn primary sm" id="inspSave">写入 Notion 灵感库</button></div>
+</div>
+
+<!-- 项目复盘详情 -->
+<div class="modal" id="mDetail">
+  <h4 id="detTitle">📈 发布复盘详情</h4>
+  <div class="mdesc" id="detSub"></div>
+  <div id="detBody"></div>
+  <div class="mactions"><button class="btn sm" id="detClose">关闭</button><button class="btn primary sm" data-jump="notion" data-target="project">去 Notion 编辑 ↗</button></div>
+</div>
+
+<!-- 设置 -->
+<div class="overlay" id="ovSet"></div>
+<div class="modal" id="mSet">
+  <h4>⚙️ 数据源配置</h4>
+  <div class="mdesc">配置后工作台拉取你真实的 Notion / 滴答数据。凭证仅存本地浏览器（localStorage），不上传服务器。<br>📱 当前已内置<b>同源代理</b> <code>/api/cors?url=</code>（无需额外部署，手机直连即可拉取真实数据）。若你自托管到别处，可改为自己的 Vercel / Cloudflare 代理地址。详见《真机部署与CORS代理》文档。</div>
+  <div class="field"><label>Notion Integration Token</label><input id="cfgToken" placeholder="secret_..."></div>
+  <div class="field"><label>数据源代理（默认同源，已预填）</label><input id="cfgProxy" placeholder="/api/cors?url="></div>
+  <div class="grid2">
+    <div class="field"><label>灵感库 ID</label><input id="cfgIdea"></div>
+    <div class="field"><label>日记 ID</label><input id="cfgDiary"></div>
+    <div class="field"><label>项目进度 ID</label><input id="cfgProject"></div>
+    <div class="field"><label>信息摄入 ID</label><input id="cfgIntake"></div>
+    <div class="field"><label>爆款拆解 ID</label><input id="cfgBreak"></div>
+    <div class="field"><label>知识库 ID</label><input id="cfgKb"></div>
+  </div>
+  <div class="field"><label>滴答清单 Access Token（开放 API）</label><input id="cfgDida" placeholder="开放API token"></div>
+  <div class="mdesc" style="margin:2px 0 8px;">🤖 <b>AI 对话</b>：填入你自己的大模型 Key（OpenAI / DeepSeek / Moonshot 等 OpenAI 兼容接口均可）。Key 仅存本地浏览器，经同源代理转发，不上传服务器。不填则 AI 抽屉显示引导提示。</div>
+  <div class="field"><label>AI API Base（可空，默认 OpenAI）</label><input id="cfgAiBase" placeholder="https://api.openai.com/v1"></div>
+  <div class="field"><label>AI API Key（你自己的 Key）</label><input id="cfgAiKey" type="password" placeholder="sk-... / DeepSeek / Moonshot Key" autocomplete="off"></div>
+  <div class="field"><label>AI 模型（可空，默认 gpt-4o-mini）</label><input id="cfgAiModel" placeholder="gpt-4o-mini"></div>
+  <div class="field chk"><input type="checkbox" id="cfgSample"><label for="cfgSample">加载示例数据（仅预览布局，非真实数据）</label></div>
+  <details><summary>高级：字段名映射（JSON，默认即可）</summary><textarea id="cfgFields" style="height:120px"></textarea></details>
+  <div class="mactions">
+    <button class="btn sm" id="setTest">测试连接</button>
+    <button class="btn sm" id="setCancel">关闭</button>
+    <button class="btn primary sm" id="setSave">保存并刷新</button>
+  </div>
+</div>
+
+<!-- AI 抽屉 -->
+<div class="drawer" id="aiDrawer">
+  <div class="dh"><span style="font-size:20px;">🤖</span><span class="nm">AI 长期复盘对话空间</span><span class="badge">自动读取个人记忆</span><button class="icon-btn" id="aiClose" style="width:34px;height:34px;font-size:16px;">✕</button></div>
+  <div class="ctx-chips" id="ctxChips"><span class="cc">📅 滴答时间</span><span class="cc">📓 Notion 日记</span><span class="cc">✨ 灵感</span><span class="cc">📊 项目</span></div>
+  <div class="chat">
+    <div class="chat-body" id="chatBody"><div class="msg ai">你好，我是你的 AI 长期复盘助手 👋<br>配置好 AI Key 后，我会基于你的创作上下文，真·实·时地跟你对谈——选题建议、效率复盘、脚本思路、内容规划都能聊。<br>还没配 Key？点右上角 ⚙️ 填一个（OpenAI / DeepSeek / Moonshot 都行）。<br>准备好了就问我：「这周创作效率如何」「下个视频选题建议」试试。</div></div>
+    <div class="chat-input"><input id="chatInput" placeholder="基于我的长期记忆提问…"><button class="btn primary sm" id="chatSend">发送</button></div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* ================= 链接映射（占位，可在设置中扩展） ================= */
+const LINKS = {
+  dida:{today:"https://dida365.com/webapp/#/today",goal:"https://dida365.com/webapp/#/goal",habit:"https://dida365.com/webapp/#/habit",timer:"https://dida365.com/webapp/#/statistic"},
+  notion:{intake:"#cfg",idea:"#cfg",diary:"#cfg",project:"#cfg",breakdown:"#cfg",kb:"#cfg"}
+};
+const LABELS = {
+  dida:{today:"滴答清单·今日清单",goal:"滴答清单·目标",habit:"滴答清单·习惯",timer:"滴答清单·时间统计"},
+  notion:{intake:"Notion·信息摄入库",idea:"Notion·灵感库",diary:"Notion·日记模板",project:"Notion·项目进度库",breakdown:"Notion·爆款拆解库",kb:"Notion·AI知识库"}
+};
+
+/* ================= 配置 ================= */
+const CFG_KEY="wb-config-v1";
+const DEFAULT_FIELDS={idea:{title:"名称",status:"状态",tags:"标签",date:"创建时间"},diary:{title:"名称",date:"日期",body:"内容"},
+  project:{title:"名称",stage:"阶段",category:"类型",play:"播放",like:"点赞",fav:"收藏",cmt:"评论",note:"复盘笔记"},
+  intake:{title:"名称",type:"类型",url:"链接",tags:"标签",level:"重要等级",date:"日期"},
+  breakdown:{title:"名称",url:"链接",body:"拆解",tags:"标签"},kb:{title:"名称",cat:"分类",body:"内容"}};
+let cfg={notionToken:"",proxy:"/api/cors?url=",dbs:{},didaToken:"",sample:false,fields:DEFAULT_FIELDS,aiBase:"https://api.openai.com/v1",aiKey:"",aiModel:"gpt-4o-mini"};
+function loadConfig(){try{const s=localStorage.getItem(CFG_KEY);if(s){cfg=Object.assign(cfg,JSON.parse(s));cfg.fields=Object.assign({},DEFAULT_FIELDS,cfg.fields||{});}}catch(e){}}
+function saveConfig(){localStorage.setItem(CFG_KEY,JSON.stringify(cfg));}
+loadConfig();
+
+/* ================= 工具 ================= */
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function toast(msg,icon="↗"){const w=document.getElementById("toastWrap");const t=document.createElement("div");t.className="toast";t.innerHTML=`<span class="ti">${icon}</span><span>${msg}</span>`;w.appendChild(t);setTimeout(()=>{t.style.opacity="0";t.style.transform="translateY(10px)";t.style.transition=".3s";setTimeout(()=>t.remove(),300);},2600);}
+function emptyState(msg,sub){return `<div class="empty"><div class="ei">🗂️</div><div class="et">${msg}</div><div class="es">${sub||""}</div><button class="btn sm primary" onclick="openSettings()">前往配置数据源 ⚙️</button></div>`;}
+
+/* ================= 跳转 ================= */
+function jump(kind,target){
+  if(kind==="notion"&&(target==="intake"||target==="idea"||target==="diary"||target==="project"||target==="breakdown"||target==="kb")){
+    const id=cfg.dbs[target]; if(id){window.open("https://www.notion.so/"+id,"_blank");toast("跳转 Notion · "+LABELS.notion[target],"↗");}
+    else{toast("尚未配置该 Notion 数据库，请先 ⚙️ 设置","⚙️");openSettings();}
+    return;
+  }
+  const url=(LINKS[kind]&&LINKS[kind][target])||"#";const label=(LABELS[kind]&&LABELS[kind][target])||"外部工具";
+  if(url==="#"){toast("请先在设置中配置链接");return;}
+  toast("即将跳转："+label,"↗");window.open(url,"_blank");
+}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-jump]");if(b)jump(b.dataset.jump,b.dataset.target);});
+
+/* ================= 连接器 ================= */
+function proxyFetch(url,opts={}){const u=cfg.proxy?cfg.proxy+encodeURIComponent(url):url;return fetch(u,opts);}
+function nHeaders(){return{"Authorization":"Bearer "+cfg.notionToken,"Notion-Version":"2022-06-28","Content-Type":"application/json"};}
+async function notionQuery(key){
+  const id=cfg.dbs[key];if(!id)return null;
+  const r=await proxyFetch("https://api.notion.com/v1/databases/"+id+"/query",{method:"POST",headers:nHeaders(),body:JSON.stringify({page_size:50})});
+  if(!r.ok)throw new Error("Notion "+r.status);
+  const j=await r.json();return j.results||[];
+}
+async function notionCreate(key,properties){
+  const id=cfg.dbs[key];if(!id)return false;
+  const r=await proxyFetch("https://api.notion.com/v1/pages",{method:"POST",headers:nHeaders(),body:JSON.stringify({parent:{database_id:id},properties})});
+  return r.ok;
+}
+async function didaGet(){
+  if(!cfg.didaToken)return null;
+  const r=await proxyFetch("https://api.dida365.com/open/v1/project",{headers:{"Authorization":"Bearer "+cfg.didaToken}});
+  if(!r.ok)throw new Error("Dida "+r.status);
+  const j=await r.json();let tasks=[];
+  (j.projects||[]).forEach(p=>(p.tasks||[]).forEach(t=>tasks.push(Object.assign({},t,{project:p.name}))));
+  return tasks;
+}
+async function didaComplete(id,completed){
+  if(!cfg.didaToken){toast("未配置滴答，仅本地标记","⚠️");return false;}
+  await proxyFetch("https://api.dida365.com/open/v1/task/"+id,{method:"POST",headers:{"Authorization":"Bearer "+cfg.didaToken,"Content-Type":"application/json"},body:JSON.stringify({id,status:completed?1:0})});
+  return true;
+}
+function pv(p){
+  if(!p)return "";
+  if(p.title)return p.title.map(t=>t.plain_text).join("");
+  if(p.rich_text)return p.rich_text.map(t=>t.plain_text).join("");
+  if(p.url)return p.url;
+  if(p.select)return p.select.name||"";
+  if(p.status)return p.status.name||"";
+  if(p.multi_select)return p.multi_select.map(x=>x.name);
+  if(p.date)return p.date.start||"";
+  if(p.number!=null)return p.number;
+  if(p.checkbox!=null)return p.checkbox;
+  return "";
+}
+function f(key,name){return (cfg.fields&&cfg.fields[key]&&cfg.fields[key][name])||name;}
+
+/* ================= 状态缓存 ================= */
+const state={tasks:[],goals:[],energy:[],ideas:[],intake:[],diary:[],doing:[],review:[],breakdown:[],kb:[]};
+
+/* ================= 每日激励 ================= */
+const quotes=[
+  {q:"“我们的任务是过河，但是没有桥或没有船就不能过。不解决桥或船的问题，过河就是一句空话。”",s:"《毛泽东选集·第一卷》方法论"},
+  {q:"“做一件事，就要把它做到底；做到底，就要见成效。”",s:"《毛泽东选集》实践论"},
+  {q:"“战略的持久战，战役和战术上的速决战。”",s:"《论持久战》节奏感"},
+  {q:"“没有调查，就没有发言权。”",s:"《反对本本主义》信息摄入"},
+  {q:"“星星之火，可以燎原。”",s:"《星星之火，可以燎原》长期主义"},
+  {q:"“集中优势兵力，各个歼灭敌人。”",s:"《毛选·军事文集》聚焦三件事"}
+];
+let qi=0;function rotateQuote(){const q=quotes[qi%quotes.length];document.getElementById("quoteText").textContent=q.q;document.getElementById("quoteSrc").textContent="— "+q.s+" · 每日激励";qi++;}rotateQuote();setInterval(rotateQuote,8000);
+
+/* ================= 渲染：主页 ================= */
+function donutHTML(data,label){
+  let acc=0,segs=[];const total=data.reduce((a,b)=>a+b.v,0)||1;
+  data.forEach(e=>{const s=acc/total*360;acc+=e.v;const en=acc/total*360;segs.push(`${e.c} ${s}deg ${en}deg`);});
+  const donut=`<div class="donut" style="background:conic-gradient(${segs.join(",")})"><div class="mid"><b>${total}h</b><span>${label}</span></div></div>`;
+  const legend=data.map(e=>`<div class="li"><span class="sw" style="background:${e.c}"></span><span style="flex:1">${e.n}</span><b style="font-variant-numeric:tabular-nums">${e.v}%</b></div>`).join("");
+  return `<div class="donut-wrap">${donut}<div class="legend">${legend}</div></div>`;
+}
+function todayStr(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+async function loadHome(){
+  // 今日三件事 + 目标进度 + 能量概览
+  const top3=document.getElementById("top3"),goals=document.getElementById("goals"),energy=document.getElementById("energy");
+  if(cfg.sample){renderHomeSample(top3,goals,energy);return;}
+  try{
+    const tasks=await didaGet();state.tasks=tasks||[];
+    const td=todayStr();
+    const today=(tasks||[]).filter(t=>t.dueDate&&String(t.dueDate).slice(0,10)===td&&t.status!==1).slice(0,3);
+    top3.innerHTML=today.length?today.map(t=>taskRowHTML(t,"top3")).join(""):emptyState("滴答今日无高优先级任务","配置滴答后可自动聚合今日三件事");
+    bindTasks(top3);
+  }catch(e){top3.innerHTML=emptyState("滴答连接失败","检查 Token / 代理："+e.message);}
+  goals.innerHTML=emptyState("目标进度需从滴答读取","在设置配置滴答后自动聚合周/月/长期目标");
+  energy.innerHTML=emptyState("时间分配需滴答计时数据","配置滴答后展示当日专注分配");
+}
+function renderHomeSample(top3,goals,energy){
+  const s=[
+    {id:"s1",title:"剪完本期「AI工具横评」成片",status:0,project:"创作"},
+    {id:"s2",title:"回复品牌合作 3 封邮件并排期",status:1,project:"商务"},
+    {id:"s3",title:"拆解 2 条对标爆款脚本结构",status:0,project:"拆解"}];
+  top3.innerHTML=s.map(t=>taskRowHTML(t,"top3")).join("");bindTasks(top3);
+  goals.innerHTML=`<div class="prog"><div class="top"><span>本周目标</span><b>6 / 10</b></div><div class="bar"><i style="width:60%"></i></div></div>
+    <div class="prog"><div class="top"><span>本月目标</span><b>18 / 30</b></div><div class="bar"><i style="width:60%;background:linear-gradient(90deg,var(--pink),var(--coral))"></i></div></div>
+    <div class="prog"><div class="top"><span>长期目标</span><b>42%</b></div><div class="bar"><i style="width:42%;background:linear-gradient(90deg,var(--teal),var(--blue))"></i></div></div>`;
+  const en=[{n:"深度创作",v:42,c:"var(--primary)"},{n:"素材收集",v:21,c:"var(--blue)"},{n:"学习输入",v:18,c:"var(--teal)"},{n:"商务沟通",v:11,c:"var(--yellow)"},{n:"休息碎片",v:8,c:"var(--text-3)"}];
+  energy.innerHTML=donutHTML(en,"今日专注");
+}
+
+/* ================= 任务行（点击完成 / 长按跳转计时） ================= */
+function taskRowHTML(t,zone){
+  const done=t.status===1;
+  return `<div class="task ${done?'done':''}" data-id="${esc(t.id)}" data-zone="${zone}">
+    <div class="check ${done?'done':''}">${done?'✓':''}</div>
+    <span class="tt">${esc(t.title)}</span>
+    <span class="lb" style="background:var(--blue)22;color:var(--blue)">${esc(t.project||'任务')}</span>
+    <span class="tstate">${done?'✓':'○'}</span></div>`;
+}
+function bindTasks(container){
+  container.querySelectorAll(".task").forEach(el=>{
+    let timer=null,longed=false,sx=0,sy=0;
+    el.addEventListener("pointerdown",e=>{longed=false;sx=e.clientX;sy=e.clientY;timer=setTimeout(()=>{longed=true;jump("dida","timer");toast("长按 → 跳转滴答计时 ⏲️","⏲️");},550);});
+    el.addEventListener("pointerup",()=>{clearTimeout(timer);if(!longed)toggleComplete(el);});
+    el.addEventListener("pointerleave",()=>clearTimeout(timer));
+    el.addEventListener("pointermove",e=>{if(Math.abs(e.clientX-sx)>8||Math.abs(e.clientY-sy)>8)clearTimeout(timer);});
+    el.addEventListener("contextmenu",e=>e.preventDefault());
+  });
+}
+async function toggleComplete(el){
+  const id=el.dataset.id;const doneNow=!el.classList.contains("done");
+  // 本地即时反馈
+  el.classList.toggle("done",doneNow);
+  const chk=el.querySelector(".check");chk.classList.toggle("done",doneNow);chk.textContent=doneNow?"✓":"";el.querySelector(".tstate").textContent=doneNow?"✓":"○";
+  const ok=await didaComplete(id,doneNow);
+  toast(doneNow?(ok?"已标记完成并同步滴答 ✓":"已标记完成（未同步）"):(ok?"已恢复并同步滴答":"已恢复（未同步）"),doneNow?"✓":"↺");
+}
+
+/* ================= 渲染：时间模块 ================= */
+async function loadTime(){
+  const tTasks=document.getElementById("todayTasks");
+  if(cfg.sample){const s=[{id:"t1",title:"录制口播（AI工具横评）",status:0,project:"创作"},{id:"t2",title:"剪辑本期成片",status:0,project:"创作"},{id:"t3",title:"阅读《影响力》第3章",status:0,project:"输入"},{id:"t4",title:"发布小红书图文预告",status:0,project:"运营"}];
+    tTasks.innerHTML=s.map(t=>taskRowHTML(t,"time")).join("");bindTasks(tTasks);}
+  else{try{const tasks=await didaGet();state.tasks=tasks||[];const td=todayStr();const today=(tasks||[]).filter(t=>t.dueDate&&String(t.dueDate).slice(0,10)===td);
+    tTasks.innerHTML=today.length?today.map(t=>taskRowHTML(t,"time")).join(""):emptyState("今日暂无事件","配置滴答后自动聚合");bindTasks(tTasks);}catch(e){tTasks.innerHTML=emptyState("滴答连接失败",e.message);}}
+  renderHabit();renderTimeView();
+}
+function renderHabit(){
+  const h=document.getElementById("heat");
+  if(cfg.sample){let html="";for(let i=0;i<140;i++){const r=Math.random();const l=r>.85?'l4':r>.65?'l3':r>.4?'l2':r>.2?'l1':'';html+=`<div class="cell ${l}" data-jump="dida" data-target="habit"></div>`;}h.innerHTML=html;}
+  else{h.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--text-3);padding:18px 0;font-size:12.5px;">配置滴答后展示周/月/年打卡热力图（点击任意格跳转滴答习惯页）</div>';}
+  h.querySelectorAll('[data-jump]').forEach(c=>c.onclick=()=>jump('dida','habit'));
+}
+function renderTimeView(){
+  const tv=document.getElementById("timeView");
+  const rows=[{n:"深度创作",v:42,c:"var(--primary)"},{n:"素材收集",v:21,c:"var(--blue)"},{n:"学习输入",v:18,c:"var(--teal)"},{n:"商务沟通",v:11,c:"var(--yellow)"},{n:"生活",v:8,c:"var(--coral)"}];
+  const html=rows.map(t=>`<div class="it" data-jump="dida" data-target="timer"><span class="nm">${t.n}</span><span class="bx"><i style="width:${t.v}%;background:${t.c}"></i></span><span class="vl">${t.v}%</span></div>`).join("");
+  tv.innerHTML=cfg.sample?html:'<div class="empty" style="padding:24px"><div class="es">配置滴答后展示日/周/月时间分配</div></div>';
+  tv.querySelectorAll('[data-jump]').forEach(r=>r.onclick=()=>jump('dida','timer'));
+  // 标签占比（习惯页）同步可点击
+  const tl=document.getElementById("tagList");
+  tl.innerHTML=cfg.sample?html:'<div class="empty" style="padding:24px"><div class="es">配置滴答后展示标签耗时占比</div></div>';
+  tl.querySelectorAll('[data-jump]').forEach(r=>r.onclick=()=>jump('dida','timer'));
+}
+
+/* ================= 渲染：灵感中枢 ================= */
+function aiTagFromUrl(url){
+  const u=url.toLowerCase();const tags=[];
+  if(u.includes("github.com"))tags.push("代码","AI");
+  if(u.includes("xiaohongshu.com")||u.includes("xhslink"))tags.push("内容","增长");
+  if(/ai|gpt|llm|agent|模型|大模型/.test(u))tags.push("AI");
+  if(/运营|增长|爆款|脚本|视频/.test(u))tags.push("内容");
+  if(tags.length===0)tags.push("行业","内容");
+  return [...new Set(tags)];
+}
+function platformFromUrl(url){if(url.includes("github.com"))return "GitHub";if(url.includes("xiaohongshu.com")||url.includes("xhslink"))return "小红书";return "链接";}
+let curPf="小红书";
+document.getElementById("pfXhs").onclick=function(){curPf="小红书";this.classList.add("active");document.getElementById("pfGh").classList.remove("active");};
+document.getElementById("pfGh").onclick=function(){curPf="GitHub";this.classList.add("active");document.getElementById("pfXhs").classList.remove("active");};
+
+async function loadIdea(){
+  await Promise.all([loadIntake(),loadIdeaList(),loadDiary()]);
+}
+async function loadIntake(){
+  const box=document.getElementById("intakeList");
+  if(cfg.sample){
+    const s=[{title:"GitHub · llama.cpp 新 release 支持本地多模态",tags:["AI","代码"],level:"高",date:"07-28"},
+      {title:"小红书 · 知识博主起号 30 天增长拆解",tags:["内容","增长"],level:"中",date:"07-27"},
+      {title:"AI 资讯 · 长上下文分析能力更新",tags:["AI","行业"],level:"高",date:"07-26"}];
+    box.innerHTML=s.map(newsHTML).join("");return;
+  }
+  try{const res=await notionQuery("intake");if(res===null){box.innerHTML=emptyState("未配置信息摄入库","在设置填写信息摄入库 ID");return;}state.intake=res;
+    box.innerHTML=res.length?res.map(p=>{const F=f("intake");const tags=pv(p.properties[F.tags]);return newsHTML({title:pv(p.properties[F.title]),tags:Array.isArray(tags)?tags:[tags].filter(Boolean),level:pv(p.properties[F.level])||"—",date:(pv(p.properties[F.date])||"").slice(5)});}).join(""):emptyState("信息摄入库暂无条目","导入链接后自动聚合为 Newsletter");}
+  catch(e){box.innerHTML=emptyState("Notion 读取失败",e.message);}
+}
+function newsHTML(x){
+  return `<div class="bubble" data-jump="notion" data-target="intake"><div class="nh"><span>📡 ${esc(x.date||"")}</span><span class="pill" style="background:var(--primary)22;color:var(--primary-ink)">重要度 ${esc(x.level||"—")}</span></div>
+    <div class="nt">${esc(x.title)}</div><div class="tags">${(x.tags||[]).map(t=>`<span class="tg">#${esc(t)}</span>`).join("")}</div></div>`;
+}
+document.getElementById("intakeBtn").onclick=async()=>{
+  const v=document.getElementById("intakeInput").value.trim();if(!v){toast("请先粘贴链接");return;}
+  const tags=aiTagFromUrl(v);const pf=platformFromUrl(v)||curPf;
+  const item={title:pf+" · "+v.slice(0,40),tags,level:"待评",date:todayStr().slice(5)};
+  document.getElementById("intakeList").insertAdjacentHTML("afterbegin",newsHTML(item));
+  document.getElementById("intakeInput").value="";
+  toast("AI 已扒取并打标签："+tags.join(" / ")+" 🤖","🤖");
+  // 反向写入 Notion 信息摄入库
+  if(cfg.dbs.intake){
+    const F=f("intake");
+    const ok=await notionCreate("intake",{
+      [F.title]:{title:[{text:{content:item.title}}]},
+      [F.tags]:{multi_select:tags.map(t=>({name:t}))},
+      [F.type]:{select:{name:pf}},
+      [F.url]:{url:v}
+    });
+    toast(ok?"已同步写入 Notion 信息摄入库 ✓":"写入 Notion 失败，已保留本次会话","↗");
+  }else{toast("未配置 Notion 信息摄入库，仅本次会话预览","⚠️");}
+};
+
+async function loadIdeaList(){
+  const box=document.getElementById("ideaList");
+  if(cfg.sample){
+    const s=[{title:"用「反常识开头」重做开场钩子",date:"07-28 21:14",st:"脚本",tags:["钩子","口播"]},
+      {title:"周末 vlog 主题：自由职业 100 天",date:"07-27 09:02",st:"视频",tags:["vlog"]},
+      {title:"做一期「AI 帮我读论文」的流程",date:"07-25 14:30",st:"初步想法",tags:["选题"]},
+      {title:"已发布：3 个被低估的效率工具",date:"07-22 18:00",st:"发布",tags:["效率"]}];
+    box.innerHTML=s.map(ideaHTML).join("");return;
+  }
+  try{const res=await notionQuery("idea");if(res===null){box.innerHTML=emptyState("未配置灵感库","在设置填写灵感库 ID");return;}state.ideas=res;
+    const sc={初步想法:"var(--text-3)",脚本:"var(--blue)",视频:"var(--pink)",发布:"var(--teal)",复盘:"var(--coral)"};
+    box.innerHTML=res.length?res.map(p=>{const F=f("idea");const st=pv(p.properties[F.status]);const tags=pv(p.properties[F.tags]);return ideaHTML({title:pv(p.properties[F.title]),date:(pv(p.properties[F.date])||"").slice(0,10),st,tags:Array.isArray(tags)?tags:[tags].filter(Boolean)});}).join(""):emptyState("灵感库暂无条目","底部 ⚡ 快速记录灵感");
+  }catch(e){box.innerHTML=emptyState("Notion 读取失败",e.message);}
+}
+function ideaHTML(x){
+  const sc={初步想法:"var(--text-3)",脚本:"var(--blue)",视频:"var(--pink)",发布:"var(--teal)",复盘:"var(--coral)"};
+  const c=sc[x.st]||"var(--text-3)";
+  return `<div class="bubble" data-jump="notion" data-target="idea"><span class="st" style="background:${c}22;color:${c}">${esc(x.st||"—")}</span>
+    <div class="mt">${esc(x.title)}</div><div class="meta"><span>🕒 ${esc(x.date||"")}</span></div>
+    <div class="tags">${(x.tags||[]).map(t=>`<span class="tg">#${esc(t)}</span>`).join("")}</div></div>`;
+}
+
+async function loadDiary(){
+  const cal=document.getElementById("cal"),prev=document.getElementById("diaryPreview");
+  if(cfg.sample){
+    const wk=["一","二","三","四","五","六","日"];wk.forEach(w=>cal.innerHTML+=`<div class="dhead">${w}</div>`);
+    for(let d=1;d<=30;d++){const today=d===29;const has=Math.random()>.45;cal.innerHTML+=`<div class="d ${today?'today':''} ${has?'has':''}" data-jump="notion" data-target="diary">${d}</div>`;}
+    prev.innerHTML="今天剪辑效率比上周高，靠的是先把脚本拆成「钩子-痛点-方案-行动」四段再开录。<br>新发现：用滴答给每个创作环节计时后，能清楚看到「素材收集」占了太多时间，下周要设上限。<br><span style='color:var(--text-3)'>（完整日记与模板跳转 Notion 编辑）</span>";
+    cal.querySelectorAll('[data-jump]').forEach(c=>c.onclick=()=>jump("notion","diary"));return;
+  }
+  try{const res=await notionQuery("diary");if(res===null){cal.innerHTML=emptyState("未配置日记库","在设置填写日记 ID");prev.innerHTML="";return;}state.diary=res;
+    const wk=["一","二","三","四","五","六","日"];wk.forEach(w=>cal.innerHTML+=`<div class="dhead">${w}</div>`);
+    const dates=new Set(res.map(p=>{const d=pv(p.properties[f("diary").date]);return d?d.slice(0,10):null;}).filter(Boolean));
+    const now=new Date();const y=now.getFullYear(),m=now.getMonth();const dim=new Date(y,m+1,0).getDate();
+    for(let d=1;d<=dim;d++){const iso=`${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;const today=iso===todayStr();const has=dates.has(iso);
+      cal.innerHTML+=`<div class="d ${today?'today':''} ${has?'has':''}" data-jump="notion" data-target="diary">${d}</div>`;}
+    cal.querySelectorAll('[data-jump]').forEach(c=>c.onclick=()=>jump("notion","diary"));
+    const F=f("diary");const last=res[0];prev.innerHTML=last?`<b>${pv(last.properties[F.date])||""}</b><br>${esc(pv(last.properties[F.body])||"（无内容）").slice(0,160)}`:emptyState("本月暂无日记","点击右上角新建日记");
+  }catch(e){cal.innerHTML=emptyState("Notion 读取失败",e.message);}
+}
+
+/* ================= 渲染：项目进度 ================= */
+async function loadProject(){
+  await Promise.all([loadDoing(),loadReview()]);
+}
+async function loadDoing(){
+  const box=document.getElementById("doingList");
+  if(cfg.sample){const s=[{title:"AI工具横评 · 第3期",st:"脚本",d:"更新 07-28",tags:["视频","横评"]},{title:"自由职业100天 vlog",st:"视频",d:"拍摄中",tags:["vlog"]},{title:"知识库搭建教程",st:"脚本",d:"大纲完成",tags:["教程"]}];
+    box.innerHTML=s.map(doingHTML).join("");return;}
+  try{const res=await notionQuery("project");if(res===null){box.innerHTML=emptyState("未配置项目库","在设置填写项目进度 ID");return;}state.doing=res;
+    const F=f("project");const cat=pv; // category filter 正在进行
+    const items=res.filter(p=>{const st=pv(p.properties[F.stage]);return ["脚本","视频"].includes(st);});
+    box.innerHTML=items.length?items.map(p=>{const tags=pv(p.properties[F.tags]);return doingHTML({title:pv(p.properties[F.title]),st:pv(p.properties[F.stage]),d:"更新 "+(pv(p.properties[F.date])||"").slice(5),tags:Array.isArray(tags)?tags:[tags].filter(Boolean)});}).join(""):emptyState("暂无进行中的项目","灵感转为「脚本」后自动进入");
+  }catch(e){box.innerHTML=emptyState("Notion 读取失败",e.message);}
+}
+function doingHTML(x){const sc={初步想法:"var(--text-3)",脚本:"var(--blue)",视频:"var(--pink)",发布:"var(--teal)",复盘:"var(--coral)"};const c=sc[x.st]||"var(--blue)";
+  return `<div class="mini" data-jump="notion" data-target="project"><span class="st" style="background:${c}22;color:${c}">${esc(x.st||"—")}</span>
+  <div class="mt">${esc(x.title)}</div><div class="meta"><span>📌 ${esc(x.d||"")}</span></div><div class="tags">${(x.tags||[]).map(t=>`<span class="tg">#${esc(t)}</span>`).join("")}</div></div>`;}
+
+async function loadReview(){
+  const box=document.getElementById("reviewList");
+  if(cfg.sample){const s=[{title:"3个被低估的效率工具",play:"12.4w",like:"8.6k",fav:"5.2k",cmt:"412"},{title:"我用AI重写了工作流",play:"8.1w",like:"5.3k",fav:"3.9k",cmt:"288"},{title:"裸辞做自媒体第30天",play:"23.7w",like:"1.4w",fav:"9.8k",cmt:"1.2k"}];
+    state.review=s.map((x,i)=>({i,...x}));box.innerHTML=state.review.map(reviewHTML).join("");bindReviewCards(box);return;}
+  try{const res=await notionQuery("project");if(res===null){box.innerHTML=emptyState("未配置项目库","在设置填写项目进度 ID");return;}
+    const F=f("project");const items=res.filter(p=>pv(p.properties[F.stage])==="发布");
+    state.review=items.map((p,i)=>({i,title:pv(p.properties[F.title]),play:pv(p.properties[F.play]),like:pv(p.properties[F.like]),fav:pv(p.properties[F.fav]),cmt:pv(p.properties[F.cmt]),note:pv(p.properties[F.note])}));
+    box.innerHTML=state.review.length?state.review.map(reviewHTML).join(""):emptyState("暂无已发布复盘","发布后自动归入此处");
+    bindReviewCards(box);
+  }catch(e){box.innerHTML=emptyState("Notion 读取失败",e.message);}
+}
+function reviewHTML(x){return `<div class="mini" data-idx="${x.i!=null?x.i:''}" data-review="1"><div class="mt">${esc(x.title)}</div>
+  <div class="meta" style="margin-top:8px;display:grid;grid-template-columns:repeat(2,1fr);gap:6px;font-size:12px;">
+  <span>▶ 播放 <b>${esc(x.play||0)}</b></span><span>♥ 点赞 <b>${esc(x.like||0)}</b></span>
+  <span>⭐ 收藏 <b>${esc(x.fav||0)}</b></span><span>💬 评论 <b>${esc(x.cmt||0)}</b></span></div></div>`;}
+function bindReviewCards(box){box.querySelectorAll('[data-review]').forEach(c=>c.onclick=()=>openDetail(parseInt(c.dataset.idx)||0));}
+function openDetail(idx){
+  const x=state.review[idx];if(!x)return;
+  document.getElementById("detTitle").textContent="📈 "+x.title;
+  const max=Math.max(...[x.play,x.like,x.fav,x.cmt].map(n=>parseFloat(String(n).replace(/[^\d.]/g,""))||0),1);
+  const colors=["var(--blue)","var(--coral)","var(--yellow)","var(--teal)"];
+  let bars="";const labels=["播放","点赞","收藏","评论"];const vals=[x.play,x.like,x.fav,x.cmt];
+  vals.forEach((v,i)=>{const num=parseFloat(String(v).replace(/[^\d.]/g,""))||0;const pct=Math.round(num/max*100);
+    bars+=`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px"><span>${labels[i]}</span><b>${esc(v)}</b></div><div class="bar"><i style="width:${pct}%;background:${colors[i]}"></i></div></div>`;});
+  document.getElementById("detBody").innerHTML=`<div style="margin-bottom:16px">${bars}</div>
+    <div style="font-size:13px;color:var(--text-2);line-height:1.7"><b style="color:var(--text)">复盘笔记：</b><br>${esc(x.note||"（Notion 中补充复盘笔记）")}</div>`;
+  document.getElementById("mDetail").classList.add("show");document.getElementById("ovSet").classList.add("show");
+}
+document.getElementById("detClose").onclick=()=>{document.getElementById("mDetail").classList.remove("show");document.getElementById("ovSet").classList.remove("show");};
+
+/* ================= 渲染：学以致用 ================= */
+async function loadLearn(){
+  const bd=document.getElementById("bdList"),kb=document.getElementById("kbList");
+  if(cfg.sample){
+    bd.innerHTML=[{title:"对标：知识博主 7 秒反常识开场",tags:["钩子","反常识"]},{title:"小红书爆文：清单体 + 情绪价值",tags:["清单体","情绪"]}].map(bdHTML).join("");bindBd(bd);
+    kb.innerHTML=[{title:"Prompt 工程：角色+约束+样例",tags:["prompt"]},{title:"用 API 把 Notion 当数据库",tags:["API","自动化"]},{title:"视频节奏：每 8 秒一个信息点",tags:["节奏"]}].map(kbHTML).join("");bindKb(kb);return;
+  }
+  try{const res=await notionQuery("breakdown");if(res!==null){const F=f("breakdown");state.breakdown=res;
+    bd.innerHTML=res.length?res.map(p=>{const tags=pv(p.properties[F.tags]);return bdHTML({title:pv(p.properties[F.title]),tags:Array.isArray(tags)?tags:[tags].filter(Boolean)});}).join(""):emptyState("爆款拆解库暂无条目","导入链接后自动拆解");bindBd(bd);}else bd.innerHTML=emptyState("未配置爆款拆解库","在设置填写 ID");}
+  catch(e){bd.innerHTML=emptyState("Notion 读取失败",e.message);}
+  try{const res=await notionQuery("kb");if(res!==null){const F=f("kb");kb.innerHTML=res.length?res.map(p=>{const tags=pv(p.properties[F.tags]);return kbHTML({title:pv(p.properties[F.title]),tags:Array.isArray(tags)?tags:[tags].filter(Boolean)});}).join(""):emptyState("知识库暂无条目","在 Notion 补充知识点");bindKb(kb);}else kb.innerHTML=emptyState("未配置知识库","在设置填写 ID");}
+  catch(e){kb.innerHTML=emptyState("Notion 读取失败",e.message);}
+}
+function bdHTML(x){return `<div class="mini" data-jump="notion" data-target="breakdown"><div class="mt">${esc(x.title)}</div><div class="tags">${(x.tags||[]).map(t=>`<span class="tg">#${esc(t)}</span>`).join("")}</div>
+  <button class="btn sm ghost" style="margin-top:10px" data-sync="bd">⇄ 反向同步回 Notion</button></div>`;}
+function kbHTML(x){return `<div class="mini" data-jump="notion" data-target="kb"><div class="mt">${esc(x.title)}</div><div class="tags">${(x.tags||[]).map(t=>`<span class="tg">#${esc(t)}</span>`).join("")}</div></div>`;}
+function bindBd(box){box.querySelectorAll('[data-sync="bd"]').forEach(b=>b.onclick=e=>{e.stopPropagation();syncBreakdown(b);});box.querySelectorAll('.mini[data-jump]').forEach(m=>m.onclick=e=>{if(e.target.dataset.sync)return;jump("notion","breakdown");});}
+function bindKb(box){box.querySelectorAll('.mini[data-jump]').forEach(m=>m.onclick=()=>jump("notion","kb"));}
+async function syncBreakdown(btn){
+  const card=btn.closest(".mini");const title=card.querySelector(".mt").textContent;
+  if(!cfg.dbs.breakdown){toast("未配置 Notion 爆款拆解库","⚠️");openSettings();return;}
+  const tags=[...card.querySelectorAll(".tg")].map(t=>t.textContent.replace("#",""));
+  const F=f("breakdown");
+  const ok=await notionCreate("breakdown",{[F.title]:{title:[{text:{content:title}}]},[F.tags]:{multi_select:tags.map(t=>({name:t}))}});
+  toast(ok?"已反向同步回 Notion 爆款拆解库 ✓":"同步失败，请检查配置","↗");
+}
+
+document.getElementById("bdBtn").onclick=async()=>{
+  const v=document.getElementById("bdInput").value.trim();if(!v){toast("请先粘贴链接");return;}
+  document.getElementById("bdList").insertAdjacentHTML("afterbegin",bdHTML({title:"拆解中："+v.slice(0,30)+"…",tags:aiTagFromUrl(v)}));
+  document.getElementById("bdInput").value="";toast("AI 正在拆解结构 / 钩子 / 节奏…","🤖");
+};
+
+/* ================= 视图加载调度 ================= */
+const loaders={home:loadHome,time:loadTime,idea:loadIdea,project:loadProject,learn:loadLearn};
+let curView="home";
+async function loadView(v){curView=v;if(loaders[v])await loaders[v]();}
+
+/* ================= 导航 ================= */
+const titles={home:"主页|全局仪表盘",time:"时间与事件管理|聚合滴答数据",idea:"灵感收集中枢|聚合 Notion 数据",project:"自媒体项目进度|聚合 Notion 项目库",learn:"学以致用|爆款拆解 & 知识库"};
+document.getElementById("nav").addEventListener("click",e=>{const it=e.target.closest(".nav-item");if(!it)return;
+  document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));it.classList.add("active");
+  const v=it.dataset.view;document.querySelectorAll(".view").forEach(s=>s.classList.remove("active"));
+  document.getElementById("view-"+v).classList.add("active");
+  const [t,s]=titles[v].split("|");document.getElementById("pageTitle").innerHTML=`${t}<small>${s}</small>`;closeSidebar();loadView(v);});
+
+/* ================= Tabs ================= */
+document.querySelectorAll("[data-tabs]").forEach(tb=>tb.addEventListener("click",e=>{const t=e.target.closest(".tab");if(!t)return;
+  tb.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));t.classList.add("active");
+  const sec=tb.closest(".view");const p=t.dataset.tab;
+  sec.querySelectorAll("[data-panel]").forEach(el=>el.style.display=(el.dataset.panel===p?"block":"none"));
+  if(sec.id==="view-idea"&&p==="intake")loadIntake();}));
+
+/* ================= 侧栏/深浅色 ================= */
+const themeBtn=document.getElementById("themeBtn");
+function setTheme(t){document.documentElement.dataset.theme=t;themeBtn.textContent=t==="dark"?"☀️":"🌙";localStorage.setItem("wb-theme",t);}
+setTheme(localStorage.getItem("wb-theme")||"light");themeBtn.onclick=()=>setTheme(document.documentElement.dataset.theme==="dark"?"light":"dark");
+const sidebar=document.getElementById("sidebar"),scrim=document.getElementById("scrim");
+function openSidebar(){sidebar.classList.add("open");scrim.classList.add("show");}function closeSidebar(){sidebar.classList.remove("open");scrim.classList.remove("show");}
+document.getElementById("hamburger").onclick=openSidebar;scrim.onclick=closeSidebar;
+
+/* ================= 底部快捷栏 ================= */
+const ovInsp=document.getElementById("ovInsp"),mInsp=document.getElementById("mInsp");
+function openInsp(){ovInsp.classList.add("show");mInsp.classList.add("show");setTimeout(()=>document.getElementById("inspInput").focus(),200);}
+function closeInsp(){ovInsp.classList.remove("show");mInsp.classList.remove("show");}
+document.getElementById("qIdea").onclick=openInsp;ovInsp.onclick=closeInsp;
+document.getElementById("inspCancel").onclick=closeInsp;
+document.getElementById("inspSave").onclick=async()=>{const v=document.getElementById("inspInput").value.trim();if(!v){toast("写点什么再保存吧");return;}
+  if(cfg.dbs.idea){const F=f("idea");const ok=await notionCreate("idea",{[F.title]:{title:[{text:{content:v}}]},[F.status]:{select:{name:"初步想法"}}});toast(ok?"已同步写入 Notion 灵感库 ✨":"写入失败，请检查配置","✓");}
+  else{toast("未配置 Notion 灵感库，仅本次会话（请设置）","⚠️");}
+  document.getElementById("inspInput").value="";closeInsp();};
+document.getElementById("inspInput").addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("inspSave").click();});
+document.getElementById("qDiary").onclick=()=>jump("notion","diary");
+// 计时：直接跳转滴答计时（移除内置倒计时，修复弹窗常驻）
+document.getElementById("qTimer").onclick=()=>jump("dida","timer");
+
+/* ================= AI 抽屉 ================= */
+const aiDrawer=document.getElementById("aiDrawer");
+document.getElementById("qAI").onclick=()=>aiDrawer.classList.add("show");
+document.getElementById("aiClose").onclick=()=>aiDrawer.classList.remove("show");
+/* ================= AI 真实对话（OpenAI 兼容） ================= */
+let chatHistory=[];
+const AI_SYS="你是「创作者中控工作台」内置的 AI 长期复盘助手，服务于一位裸辞后专注自媒体创作的自由职业者。他的工作流：任务与番茄钟在滴答清单，灵感/日记/项目进度/爆款拆解/知识库在 Notion，工作台只做只读聚合展示。你的职责：基于他的创作上下文，帮他做选题建议、效率复盘、脚本思路、内容规划与工具选型；语气像一位懂创作、懂工具、有主见的工作搭子——简洁直接，少废话，给可立即执行的建议。当他问到具体实时数据时，若你无法确认，请诚实说明你无法实时读取，并建议他在对应工具或工作台对应模块查看，或先到 ⚙️ 配置数据源。";
+function safeHTML(t){return esc(t).replace(/\n/g,"<br>");}
+async function callAI(body,ti){
+  if(!cfg.aiKey){ti.className="msg ai";ti.innerHTML='⚠️ 尚未配置 AI Key。请点右上角 ⚙️ → 填写「AI API Key」（OpenAI / DeepSeek / Moonshot 等均可）。';body.scrollTop=body.scrollHeight;return;}
+  const messages=[{role:"system",content:AI_SYS}].concat(chatHistory.slice(-16));
+  try{
+    const r=await proxyFetch(cfg.aiBase.replace(/\/+$/,"")+"/chat/completions",{method:"POST",headers:{"content-type":"application/json","authorization":"Bearer "+cfg.aiKey},body:JSON.stringify({model:cfg.aiModel||"gpt-4o-mini",messages,temperature:0.7,max_tokens:1200})});
+    if(!r.ok){let t="";try{t=(await r.text()).slice(0,260);}catch(e){}ti.className="msg ai";ti.innerHTML='⚠️ AI 返回 '+r.status+'：'+safeHTML(t||"(无错误信息)");body.scrollTop=body.scrollHeight;return;}
+    const data=await r.json();
+    const ans=(data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||"(空回复)";
+    chatHistory.push({role:"assistant",content:ans});
+    ti.className="msg ai";ti.innerHTML=safeHTML(ans);body.scrollTop=body.scrollHeight;
+  }catch(e){ti.className="msg ai";ti.innerHTML='⚠️ 连接失败：'+safeHTML(e.message)+'<br>请检查代理地址 / AI Key / 网络，或在设置中确认代理为同源 /api/cors?url=';body.scrollTop=body.scrollHeight;}
+}
+function sendChat(){const inp=document.getElementById("chatInput");const v=inp.value.trim();if(!v)return;const body=document.getElementById("chatBody");
+  body.innerHTML+=`<div class="msg me">${esc(v)}</div>`;inp.value="";
+  chatHistory.push({role:"user",content:v});
+  const ti=document.createElement("div");ti.className="msg ai typing";ti.textContent="正在思考…";body.appendChild(ti);body.scrollTop=body.scrollHeight;
+  callAI(body,ti);}
+document.getElementById("chatSend").onclick=sendChat;
+document.getElementById("chatInput").addEventListener("keydown",e=>{if(e.key==="Enter")sendChat();});
+
+/* ================= 设置 ================= */
+function openSettings(){fillSettings();document.getElementById("ovSet").classList.add("show");document.getElementById("mSet").classList.add("show");}
+function fillSettings(){document.getElementById("cfgToken").value=cfg.notionToken||"";document.getElementById("cfgProxy").value=cfg.proxy||"";
+  document.getElementById("cfgIdea").value=cfg.dbs.idea||"";document.getElementById("cfgDiary").value=cfg.dbs.diary||"";document.getElementById("cfgProject").value=cfg.dbs.project||"";
+  document.getElementById("cfgIntake").value=cfg.dbs.intake||"";document.getElementById("cfgBreak").value=cfg.dbs.breakdown||"";document.getElementById("cfgKb").value=cfg.dbs.kb||"";
+  document.getElementById("cfgDida").value=cfg.didaToken||"";document.getElementById("cfgAiBase").value=cfg.aiBase||"";document.getElementById("cfgAiKey").value=cfg.aiKey||"";document.getElementById("cfgAiModel").value=cfg.aiModel||"";document.getElementById("cfgSample").checked=!!cfg.sample;
+  document.getElementById("cfgFields").value=JSON.stringify(cfg.fields,null,2);}
+document.getElementById("setBtn").onclick=openSettings;
+document.getElementById("ovSet").onclick=()=>{if(!document.getElementById("mDetail").classList.contains("show")){document.getElementById("ovSet").classList.remove("show");document.getElementById("mSet").classList.remove("show");}};
+document.getElementById("setCancel").onclick=()=>{document.getElementById("ovSet").classList.remove("show");document.getElementById("mSet").classList.remove("show");};
+document.getElementById("setSave").onclick=()=>{
+  cfg.notionToken=document.getElementById("cfgToken").value.trim();
+  cfg.proxy=document.getElementById("cfgProxy").value.trim();
+  cfg.dbs={idea:document.getElementById("cfgIdea").value.trim(),diary:document.getElementById("cfgDiary").value.trim(),project:document.getElementById("cfgProject").value.trim(),intake:document.getElementById("cfgIntake").value.trim(),breakdown:document.getElementById("cfgBreak").value.trim(),kb:document.getElementById("cfgKb").value.trim()};
+  cfg.didaToken=document.getElementById("cfgDida").value.trim();
+  cfg.aiBase=document.getElementById("cfgAiBase").value.trim()||"https://api.openai.com/v1";
+  cfg.aiKey=document.getElementById("cfgAiKey").value.trim();
+  cfg.aiModel=document.getElementById("cfgAiModel").value.trim()||"gpt-4o-mini";
+  cfg.sample=document.getElementById("cfgSample").checked;
+  try{cfg.fields=Object.assign({},DEFAULT_FIELDS,JSON.parse(document.getElementById("cfgFields").value||"{}"));}catch(e){toast("字段映射 JSON 格式有误，已忽略","⚠️");}
+  saveConfig();updateConn();
+  document.getElementById("ovSet").classList.remove("show");document.getElementById("mSet").classList.remove("show");
+  toast("配置已保存，正在刷新数据…","✓");loadView(curView);
+};
+document.getElementById("setTest").onclick=async()=>{
+  const token=document.getElementById("cfgToken").value.trim();const pid=document.getElementById("cfgProject").value.trim();
+  if(!token||!pid){toast("请先填写 Token 与任一数据库 ID","⚠️");return;}
+  try{const r=await proxyFetch("https://api.notion.com/v1/databases/"+pid,{headers:nHeaders()});if(r.ok)toast("Notion 连接成功 ✓","✓");else toast("Notion 返回 "+r.status+"（检查 Token / 数据库共享给集成）","⚠️");}
+  catch(e){toast("连接失败："+e.message+"（若跨域，请填代理地址）","⚠️");}
+};
+function updateConn(){
+  const nd=document.getElementById("csNotion"),dd=document.getElementById("csDida"),ad=document.getElementById("csAi");
+  if(cfg.notionToken&&Object.values(cfg.dbs).some(Boolean)){nd.className="conn-status on";nd.innerHTML='<span class="dot on"></span><span>Notion · 已连接</span>';}
+  else{nd.className="conn-status off";nd.innerHTML='<span class="dot"></span><span>Notion · 未配置</span>';}
+  if(cfg.didaToken){dd.className="conn-status on";dd.innerHTML='<span class="dot on"></span><span>滴答清单 · 已连接</span>';}
+  else{dd.className="conn-status off";dd.innerHTML='<span class="dot"></span><span>滴答清单 · 未配置</span>';}
+  if(cfg.aiKey){ad.className="conn-status on";ad.innerHTML='<span class="dot on"></span><span>AI 对话 · 已连接</span>';}
+  else{ad.className="conn-status off";ad.innerHTML='<span class="dot"></span><span>AI 对话 · 未配置</span>';}
+}
+document.getElementById("refreshBtn").onclick=()=>{toast("刷新当前页数据…","🔄");loadView(curView);};
+
+/* ================= 启动 ================= */
+updateConn();
+loadView("home");
+</script>
+</body>
+</html>
