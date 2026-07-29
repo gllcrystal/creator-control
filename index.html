@@ -644,8 +644,18 @@ async function loadHome(){
   try{
     const tasks=await didaGet();state.tasks=tasks||[];
     const td=todayStr();
-    const today=(tasks||[]).filter(t=>t.dueDate&&String(t.dueDate).slice(0,10)===td&&t.status!==1).slice(0,3);
-    top3.innerHTML=today.length?today.map(t=>taskRowHTML(t,"top3")).join(""):emptyState("滴答今日无高优先级任务","配置滴答后可自动聚合今日三件事");
+    // 优先取今天到期的未完成任务， fallback 到最近未完成任务（最多5条）
+    let today=(tasks||[]).filter(t=>t.dueDate&&String(t.dueDate).slice(0,10)===td&&t.status!==1).slice(0,3);
+    if(!today.length){
+      // fallback: 取所有未完成任务，按是否有今天/明天日期排序
+      const pending=tasks.filter(t=>t.status!==1);
+      today=pending.sort((a,b)=>{
+        const ad=a.dueDate?String(a.dueDate).slice(0,10):"9999";
+        const bd=b.dueDate?String(b.dueDate).slice(0,10):"9999";
+        return ad.localeCompare(bd);
+      }).slice(0,5);
+    }
+    top3.innerHTML=today.length?today.map(t=>taskRowHTML(t,"top3")).join(""):emptyState("滴答暂无待办任务","去滴答 App 创建一些任务吧 ✏️");
     bindTasks(top3);
   }catch(e){const msg=e.message||"";const hint=msg.includes("Failed to fetch")||msg.includes("NetworkError")||msg.includes("TypeError")?"💡 请检查网络连接，或确认滴答 Token 是否有效":"检查 Token："+msg;top3.innerHTML=emptyState("滴答连接失败",hint);}
   goals.innerHTML=emptyState("目标进度需从滴答读取","在设置配置滴答后自动聚合周/月/长期目标");
@@ -667,10 +677,12 @@ function renderHomeSample(top3,goals,energy){
 /* ================= 任务行（点击完成 / 长按跳转计时） ================= */
 function taskRowHTML(t,zone){
   const done=t.status===1;
+  const due=t.dueDate?String(t.dueDate).slice(5,10):"";
+  const isToday=due===todayStr().slice(5);
   return `<div class="task ${done?'done':''}" data-id="${esc(t.id)}" data-zone="${zone}">
     <div class="check ${done?'done':''}">${done?'✓':''}</div>
     <span class="tt">${esc(t.title)}</span>
-    <span class="lb" style="background:var(--blue)22;color:var(--blue)">${esc(t.project||'任务')}</span>
+    <span class="lb" style="background:${isToday?'var(--primary)':'var(--blue)'}22;color:${isToday?'var(--primary-ink)':'var(--blue)'}">${due||esc(t.project||'任务')}</span>
     <span class="tstate">${done?'✓':'○'}</span></div>`;
 }
 function bindTasks(container){
@@ -698,7 +710,7 @@ async function loadTime(){
   if(cfg.sample){const s=[{id:"t1",title:"录制口播（AI工具横评）",status:0,project:"创作"},{id:"t2",title:"剪辑本期成片",status:0,project:"创作"},{id:"t3",title:"阅读《影响力》第3章",status:0,project:"输入"},{id:"t4",title:"发布小红书图文预告",status:0,project:"运营"}];
     tTasks.innerHTML=s.map(t=>taskRowHTML(t,"time")).join("");bindTasks(tTasks);}
   else{try{const tasks=await didaGet();state.tasks=tasks||[];const td=todayStr();const today=(tasks||[]).filter(t=>t.dueDate&&String(t.dueDate).slice(0,10)===td);
-    tTasks.innerHTML=today.length?today.map(t=>taskRowHTML(t,"time")).join(""):emptyState("今日暂无事件","配置滴答后自动聚合");bindTasks(tTasks);}catch(e){const m=e.message||"";tTasks.innerHTML=emptyState("滴答连接失败",m.includes("Failed to fetch")?"💡 请检查网络或确认 Token 有效":m);}}
+    tTasks.innerHTML=today.length?today.map(t=>taskRowHTML(t,"time")).join(""):emptyState("今日暂无事件","显示所有未完成任务");bindTasks(tTasks);}catch(e){const m=e.message||"";tTasks.innerHTML=emptyState("滴答连接失败",m.includes("Failed to fetch")?"💡 请检查网络或确认 Token 有效":m);}}
   renderHabit();renderTimeView();
 }
 function renderHabit(){
