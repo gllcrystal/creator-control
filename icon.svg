@@ -1,22 +1,71 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#E8C8DC"/>
+    <!-- 宇宙背景渐变 -->
+    <radialGradient id="bg" cx="38%" cy="32%" r="80%">
+      <stop offset="0" stop-color="#3A2A55"/>
+      <stop offset="0.55" stop-color="#2A1F45"/>
+      <stop offset="1" stop-color="#1E1538"/>
+    </radialGradient>
+    <!-- 星球渐变（马卡龙紫粉） -->
+    <radialGradient id="planet" cx="35%" cy="30%" r="80%">
+      <stop offset="0" stop-color="#F2D2E4"/>
       <stop offset="0.5" stop-color="#D4A5B8"/>
       <stop offset="1" stop-color="#A78BCA"/>
+    </radialGradient>
+    <!-- 星环渐变 -->
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E8C8DC"/>
+      <stop offset="1" stop-color="#C9B8D8"/>
     </linearGradient>
+    <!-- 玻璃高光 -->
     <linearGradient id="shine" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="rgba(255,255,255,0.35)"/>
-      <stop offset="0.5" stop-color="rgba(255,255,255,0.08)"/>
-      <stop offset="1" stop-color="rgba(255,255,255,0.25)"/>
+      <stop offset="0" stop-color="rgba(255,255,255,0.30)"/>
+      <stop offset="0.5" stop-color="rgba(255,255,255,0.05)"/>
+      <stop offset="1" stop-color="rgba(255,255,255,0.18)"/>
     </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
   </defs>
-  <!-- 背景圆角矩形 -->
-  <rect width="512" height="512" rx="112" fill="url(#g)"/>
+
+  <!-- 圆角宇宙背景 -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- 背景星点 -->
+  <g fill="#FFFFFF">
+    <circle cx="90" cy="110" r="3" opacity="0.85"/>
+    <circle cx="150" cy="70" r="2" opacity="0.6"/>
+    <circle cx="410" cy="95" r="2.5" opacity="0.7"/>
+    <circle cx="440" cy="160" r="2" opacity="0.5"/>
+    <circle cx="70" cy="300" r="2" opacity="0.55"/>
+    <circle cx="430" cy="340" r="3" opacity="0.8"/>
+    <circle cx="120" cy="430" r="2" opacity="0.5"/>
+    <circle cx="380" cy="440" r="2.5" opacity="0.65"/>
+    <circle cx="250" cy="55" r="1.8" opacity="0.5"/>
+    <circle cx="300" cy="470" r="2" opacity="0.5"/>
+  </g>
+  <!-- 四角星（闪光） -->
+  <g fill="#F2D2E4" filter="url(#glow)">
+    <path d="M408 130 l6 14 14 6 -14 6 -6 14 -6 -14 -14 -6 14 -6 z" opacity="0.95"/>
+    <path d="M95 200 l4 9 9 4 -9 4 -4 9 -4 -9 -9 -4 9 -4 z" opacity="0.8"/>
+    <path d="M370 410 l4 9 9 4 -9 4 -4 9 -4 -9 -9 -4 9 -4 z" opacity="0.75"/>
+  </g>
+
+  <!-- 星球 + 星环 -->
+  <g transform="translate(256 268)">
+    <!-- 星环（后方） -->
+    <ellipse cx="0" cy="6" rx="150" ry="46" fill="none" stroke="url(#ring)" stroke-width="14" opacity="0.85" transform="rotate(-22)"/>
+    <!-- 星球本体 -->
+    <circle cx="0" cy="0" r="92" fill="url(#planet)"/>
+    <!-- 星球表面柔光 -->
+    <ellipse cx="-26" cy="-30" rx="40" ry="28" fill="rgba(255,255,255,0.22)"/>
+    <!-- 小卫星 -->
+    <circle cx="118" cy="-58" r="14" fill="#F2D2E4" opacity="0.9"/>
+    <!-- 星环（前方，盖住星球下半） -->
+    <path d="M -150 6 A 150 46 0 0 0 150 6" fill="none" stroke="url(#ring)" stroke-width="14" opacity="0.95" transform="rotate(-22)"/>
+  </g>
+
   <!-- 玻璃高光层 -->
-  <rect width="512" height="512" rx="112" fill="url(#shine)" style="mix-blend-mode:overlay;opacity:0.6;"/>
-  <!-- 内部柔光 -->
-  <ellipse cx="180" cy="140" rx="160" ry="120" fill="rgba(255,255,255,0.12)" filter="blur(40px)"/>
-  <!-- 图标文字 -->
-  <text x="256" y="268" font-size="260" text-anchor="middle" dominant-baseline="central">◈</text>
+  <rect width="512" height="512" rx="112" fill="url(#shine)" style="mix-blend-mode:overlay;opacity:0.55;"/>
 </svg>
