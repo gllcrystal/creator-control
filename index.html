@@ -495,7 +495,7 @@ const LABELS = {
 
 /* ================= 配置 ================= */
 const CFG_KEY="wb-config-v1";
-const DEFAULT_FIELDS={idea:{title:"名称",status:"状态",tags:"标签",date:"创建时间"},diary:{title:"名称",date:"日期",body:"内容"},
+const DEFAULT_FIELDS={idea:{title:"名称",status:"状态",tags:"标签",date:"创建时间"},diary:{title:"名称",date:"日期",body:"输出"},
   project:{title:"名称",stage:"阶段",category:"类型",play:"播放",like:"点赞",fav:"收藏",cmt:"评论",note:"复盘笔记"},
   intake:{title:"名称",type:"类型",url:"链接",tags:"标签",level:"重要等级",date:"日期"},
   breakdown:{title:"名称",url:"链接",body:"拆解",tags:"标签"},kb:{title:"名称",cat:"分类",body:"内容"}};
@@ -567,7 +567,11 @@ function pv(p){
   if(p.checkbox!=null)return p.checkbox;
   return "";
 }
-function f(key,name){return (cfg.fields&&cfg.fields[key]&&cfg.fields[key][name])||name;}
+function f(key,name){
+  const obj=(cfg.fields&&cfg.fields[key])||DEFAULT_FIELDS[key]||{};
+  if(name===undefined)return obj;                       // 单参数：返回整个字段映射对象
+  return obj[name]||(DEFAULT_FIELDS[key]&&DEFAULT_FIELDS[key][name])||name; // 双参数：返回具体字段名
+}
 
 /* ================= 状态缓存 ================= */
 const state={tasks:[],goals:[],energy:[],ideas:[],intake:[],diary:[],doing:[],review:[],breakdown:[],kb:[]};
