@@ -365,10 +365,10 @@
         </div>
         <div data-panel="diary" style="display:none;">
           <div class="subsec">
-            <div class="head"><h3>📓 每日日记概览</h3><button class="btn sm" data-jump="notion" data-target="diary">新建 / 编辑日记 ↗</button></div>
+            <div class="head"><h3>📓 每日日记概览</h3><button class="btn sm" id="btnNewDiary">新建 / 编辑日记 ↗</button></div>
             <div class="grid" style="grid-template-columns:auto 1fr;">
               <div class="card"><h3 style="font-size:14px;">本月日历</h3><div class="cal" id="cal"></div></div>
-              <div class="card"><h3 style="font-size:14px;">今日日记预览</h3><div class="desc">摘要预览（完整撰写跳转 Notion 日记模板）</div><div id="diaryPreview" style="font-size:13.5px;color:var(--text-2);line-height:1.7;"></div></div>
+              <div class="card"><h3 style="font-size:14px;">近期质感打分</h3><div class="desc">最近 3 天的整体质感（点击日历查看详情）</div><div id="diaryPreview" style="font-size:13.5px;color:var(--text-2);line-height:1.7;"></div></div>
             </div>
           </div>
         </div>
@@ -764,6 +764,7 @@ async function loadDiary(){
   }
   try{const res=await notionQuery("diary");if(res===null){cal.innerHTML=emptyState("未配置日记库","在设置填写日记 ID");prev.innerHTML="";return;}state.diary=res;
     const F=f("diary");
+    const dbId=cleanId(cfg.dbs["diary"]);
     // 构建日期→页面ID映射，用于精确跳转
     const datePageMap={};res.forEach(p=>{const d=pv(p.properties[F.date]);if(d){const iso=d.slice(0,10);datePageMap[iso]=p.id;}});
     const dates=new Set(Object.keys(datePageMap));
@@ -771,26 +772,52 @@ async function loadDiary(){
     const now=new Date();const y=now.getFullYear(),m=now.getMonth();const dim=new Date(y,m+1,0).getDate();
     for(let d=1;d<=dim;d++){const iso=`${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;const today=iso===todayStr();const has=dates.has(iso);
       const pid=datePageMap[iso]||"";
-      cal.innerHTML+=`<div class="d ${today?'today':''} ${has?'has':''}" data-page-id="${pid}" title="${has?'查看当日日记':''}">${d}</div>`;}
-    // 点击日历格子 → 跳转到该天具体的 Notion 页面
-    cal.querySelectorAll('.d.has,.d.today').forEach(el=>{
-      el.style.cursor="pointer";el.onclick=function(){const pid=this.getAttribute('data-page-id');if(pid)window.open("https://www.notion.so/"+pid.replace(/-/g,''),"_blank");else jump("notion","diary");};
+      cal.innerHTML+=`<div class="d ${today?'today':''} ${has?'has':''}" data-page-id="${pid}" data-date="${iso}" title="${has?'查看当日日记':'新建当日日记'}">${d}</div>`;}
+    // 点击日历格子：有数据→跳具体页面；无数据→新建当天日记
+    cal.querySelectorAll('.d').forEach(el=>{
+      el.style.cursor="pointer";el.onclick=function(){
+        const pid=this.getAttribute('data-page-id');
+        if(pid){window.open("https://www.notion.so/"+pid,"_blank");}
+        else if(dbId){window.open("https://www.notion.so/"+dbId+"?p=v&new=true","_blank");}
+        else {jump("notion","diary");}
+      };
     });
-    // 预览：聚合多个关键字段生成摘要（不再只取单一 body 字段）
-    const last=res[0];
-    if(last){
-      const lp=last.properties;
-      const parts=[];
-      const theme=pv(lp["当下主题"]);if(parts.push(theme));
-      const action=pv(lp["之后最小行动"]);if(action&&action!==theme)parts.push(action);
-      const out=pv(lp[F.body]||lp["输出"]);if(out)parts.push(out);
-      const inp=pv(lp["输入"]);if(inp)parts.push(inp);
-      const mood=pv(lp["整体质感"]);if(mood)parts.unshift("🎯 "+mood);
-      const summary=parts.filter(Boolean).join(" · ").slice(0,220);
-      prev.innerHTML=`<b>${pv(lp[F.date])||""}</b><br>${esc(summary)||"（暂无内容）"}`;
-    } else {prev.innerHTML=emptyState("本月暂无日记","点击右下角新建日记");}
+    // 预览：最近3天的「整体质感」打分卡片
+    const moodScores=[];
+    const todayIso=todayStr();
+    // 收集所有有质感打分的条目
+    res.forEach(p=>{
+      const d=pv(p.properties[F.date]);
+      const mood=pv(p.properties["整体质感"]);
+      if(d&&mood)moodScores.push({iso:d.slice(0,10),mood,title:pv(p.properties[F.title])});
+    });
+    // 按日期倒序取最近3天
+    moodScores.sort((a,b)=>b.iso.localeCompare(a.iso));
+    const recent=moodScores.slice(0,3);
+    if(recent.length){
+      let html='<div style="display:flex;flex-direction:column;gap:8px;">';
+      recent.forEach((item,idx)=>{
+        const isToday=item.iso===todayIso;
+        const label=isToday?"今天":idx===1?"昨天":"前天";
+        const bg=isToday?"var(--blue)":"var(--text-3)";
+        html+=`<div style="background:${bg}15;border-left:3px solid ${bg};padding:8px 10px;border-radius:6px;">
+          <span style="font-size:11px;color:var(--text-3);">${label} ${item.iso}</span>
+          <div style="font-size:15px;font-weight:700;margin-top:2px;">${esc(item.mood)}</div>
+        </div>`;
+      });
+      html+='</div><div style="margin-top:10px;font-size:12px;color:var(--text-3);">点击日历查看详情 · 右上角新建</div>';
+      prev.innerHTML=html;
+    } else {
+      prev.innerHTML=`<div style="color:var(--text-3);">暂无质感记录</div><button class="btn sm primary" style="margin-top:8px;" onclick="document.getElementById('qDiary').click()">写今天的第一篇日记 ✏️</button>`;
+    }
   }catch(e){cal.innerHTML=emptyState("Notion 读取失败",e.message);}
 }
+// 「新建/编辑日记」按钮 → 跳 Notion 新建页面
+document.getElementById("btnNewDiary").onclick=()=>{
+  const dbId=cleanId(cfg.dbs["diary"]);
+  if(dbId){window.open("https://www.notion.so/"+dbId+"?p=v&new=true","_blank");}
+  else {toast("尚未配置日记库","⚙️");openSettings();}
+};
 
 /* ================= 渲染：项目进度 ================= */
 async function loadProject(){
@@ -912,7 +939,11 @@ document.getElementById("inspSave").onclick=async()=>{const v=document.getElemen
   else{toast("未配置 Notion 灵感库，仅本次会话（请设置）","⚠️");}
   document.getElementById("inspInput").value="";closeInsp();};
 document.getElementById("inspInput").addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("inspSave").click();});
-document.getElementById("qDiary").onclick=()=>jump("notion","diary");
+document.getElementById("qDiary").onclick=()=>{
+  const dbId=cleanId(cfg.dbs["diary"]);
+  if(dbId){window.open("https://www.notion.so/"+dbId+"?p=v&new=true","_blank");toast("打开 Notion 新建日记 ✏️");}
+  else {toast("尚未配置日记库，请先 ⚙️ 设置","⚙️");openSettings();}
+};
 // 计时：直接跳转滴答计时（移除内置倒计时，修复弹窗常驻）
 document.getElementById("qTimer").onclick=()=>jump("dida","timer");
 
