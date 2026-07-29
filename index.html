@@ -595,7 +595,7 @@ async function loadHome(){
     const today=(tasks||[]).filter(t=>t.dueDate&&String(t.dueDate).slice(0,10)===td&&t.status!==1).slice(0,3);
     top3.innerHTML=today.length?today.map(t=>taskRowHTML(t,"top3")).join(""):emptyState("滴答今日无高优先级任务","配置滴答后可自动聚合今日三件事");
     bindTasks(top3);
-  }catch(e){top3.innerHTML=emptyState("滴答连接失败","检查 Token / 代理："+e.message);}
+  }catch(e){const msg=e.message||"";const hint=msg.includes("504")||msg.includes("timeout")||msg.includes("Timeout")?"⏱️ 国内 API 从海外服务器访问超时（正常现象）<br>💡 解决方案：在设置里把「数据源代理」改为 Cloudflare Worker 代理地址（见文档），或暂时用「跳转今日清单」直接在滴答 App 里查看":"检查 Token / 代理："+msg;top3.innerHTML=emptyState("滴答连接失败",hint);}
   goals.innerHTML=emptyState("目标进度需从滴答读取","在设置配置滴答后自动聚合周/月/长期目标");
   energy.innerHTML=emptyState("时间分配需滴答计时数据","配置滴答后展示当日专注分配");
 }
@@ -646,7 +646,7 @@ async function loadTime(){
   if(cfg.sample){const s=[{id:"t1",title:"录制口播（AI工具横评）",status:0,project:"创作"},{id:"t2",title:"剪辑本期成片",status:0,project:"创作"},{id:"t3",title:"阅读《影响力》第3章",status:0,project:"输入"},{id:"t4",title:"发布小红书图文预告",status:0,project:"运营"}];
     tTasks.innerHTML=s.map(t=>taskRowHTML(t,"time")).join("");bindTasks(tTasks);}
   else{try{const tasks=await didaGet();state.tasks=tasks||[];const td=todayStr();const today=(tasks||[]).filter(t=>t.dueDate&&String(t.dueDate).slice(0,10)===td);
-    tTasks.innerHTML=today.length?today.map(t=>taskRowHTML(t,"time")).join(""):emptyState("今日暂无事件","配置滴答后自动聚合");bindTasks(tTasks);}catch(e){tTasks.innerHTML=emptyState("滴答连接失败",e.message);}}
+    tTasks.innerHTML=today.length?today.map(t=>taskRowHTML(t,"time")).join(""):emptyState("今日暂无事件","配置滴答后自动聚合");bindTasks(tTasks);}catch(e){const m=e.message||"";tTasks.innerHTML=emptyState("滴答连接失败",m.includes("504")?"⏱️ 国内 API 超时（海外服务器访问较慢）<br>💡 可点下方「跳转今日清单」直接在滴答 App 查看":m);}}
   renderHabit();renderTimeView();
 }
 function renderHabit(){
