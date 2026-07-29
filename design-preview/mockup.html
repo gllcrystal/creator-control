@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1.0">
+<title>创作者中控台 · 新风格预览</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:-apple-system,'SF Pro','PingFang SC',sans-serif;background:#f0e6f0;
+    display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px;}
+  
+  .phone{width:390px;height:844px;border-radius:48px;overflow:hidden;position:relative;
+    box-shadow:0 25px 80px rgba(120,80,140,0.35),0 8px 30px rgba(120,80,140,0.15),inset 0 0 0 1px rgba(255,255,255,0.5);
+    background:linear-gradient(175deg,#f5eef8 0%,#e8e0f4 25%,#dde8f0 50%,#e0f0e8 75%,#f0e8ee 100%);}
+  
+  /* 状态栏 */
+  .statusbar{height:54px;display:flex;justify-content:space-between;align-items:flex-end;padding:0 28px 8px;font-size:15px;font-weight:600;color:#333;}
+  
+  /* 顶部导航 */
+  .topbar{height:52px;display:flex;align-items:center;padding:0 18px;gap:12px;position:relative;z-index:40;}
+  .topbar .menu-btn{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,0.65);border:none;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-size:19px;color:#555;}
+  .topbar h1{font-size:20px;font-weight:800;flex:1;text-align:center;margin-right:38px;
+    background:linear-gradient(135deg,#a78bca,#d4a5b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .topbar .icon-btn{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.55);border:none;font-size:16px;}
+
+  /* Tab 栏 */
+  .tabs{display:flex;gap:8px;padding:10px 16px 0;overflow-x:auto;}
+  .tab{padding:9px 16px;border-radius:14px;font-size:13px;font-weight:600;white-space:nowrap;cursor:pointer;
+    border:1.5px solid transparent;background:rgba(255,255,255,0.45);color:#7a6a82;transition:.2s;}
+  .tab.active{background:linear-gradient(135deg,#c9b8d8,#b8a8c8);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(180,160,200,0.3);}
+  
+  /* 内容区 */
+  .content{padding:14px 16px;overflow-y:auto;height:calc(844px - 54px - 52px - 50px - 80px);}
+  
+  /* 日记卡片 */
+  .section-title{font-size:15px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px;color:#5a4a62;}
+  .card{background:rgba(255,255,255,0.58);border-radius:22px;padding:16px;margin-bottom:14px;
+    border:1px solid rgba(255,255,255,0.7);box-shadow:0 4px 20px rgba(160,130,180,0.08);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+  
+  /* 日历 */
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;margin-bottom:12px;}
+  .cal-head{font-size:11px;color:#9988a4;font-weight:600;padding:4px 0;}
+  .cal-d{aspect-ratio:1;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:550;cursor:pointer;transition:.2s;}
+  .cal-d.today{background:linear-gradient(135deg,#d4c4e0,#c8b8d4);color:#fff;font-weight:700;box-shadow:0 3px 10px rgba(180,150,200,0.25);}
+  .cal-d.has{background:rgba(210,190,230,0.35);color:#6a5a7a;}
+  .cal-d.has::after{content:'';position:absolute;width:5px;height:5px;border-radius:50%;background:#d4a5b8;bottom:3px;}
+
+  /* 质感记录 */
+  .mood-row{display:flex;flex-direction:column;gap:6px;margin-top:10px;}
+  .mood-item{padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.4;
+    background:linear-gradient(135deg,rgba(212,195,230,0.25),rgba(220,210,235,0.15));border-left:3px solid #b898c8;}
+  .mood-date{font-size:11px;color:#9988a4;margin-bottom:2px;}
+  .mood-text{font-weight:650;color:#5a4a62;}
+  .mood-energy{color:#7a9a88;font-size:12px;margin-left:8px;}
+
+  /* 气泡区域 */
+  .bubble-area{display:flex;flex-wrap:wrap;gap:10px 14px;padding:16px 10px;justify-content:center;align-items:center;align-content:flex-start;min-height:260px;}
+  
+  .bubble{border-radius:22px 22px 22px 8px;padding:12px 15px 14px;cursor:pointer;transition:.35s cubic-bezier(.34,1.56,.64,1);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    box-shadow:0 3px 16px rgba(160,140,180,0.1),inset 0 1px 10px rgba(255,255,255,0.6);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    position:relative;overflow:hidden;}
+  .bubble::before{content:'';position:absolute;inset:0;border-radius:inherit;
+    background:linear-gradient(135deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.08) 55%,transparent 100%);pointer-events:none;}
+  .bubble:hover{transform:translateY(-5px) scale(1.04)!important;box-shadow:0 12px 28px rgba(160,140,180,0.2),inset 0 2px 14px rgba(255,255,255,0.7);}
+  
+  /* 未开始 - 透明白 */
+  .bubble.st0{background:rgba(248,247,250,0.6);border:1.2px solid rgba(200,195,210,0.45);
+    color:#7a8a9a;width:145px;height:72px;transform:rotate(-2deg) translate(-4px,2px);}
+  /* 进行中 - 淡黄 */
+  .bubble.st1{background:rgba(255,250,235,0.55);border:1.2px solid rgba(225,200,110,0.4);
+    color:#a08820;width:170px;height:80px;transform:rotate(1.5deg) translate(3px,-2px);}
+  /* 已完成 - 淡绿 */
+  .bubble.st2{background:rgba(234,248,234,0.5);border:1.2px solid rgba(130,185,140,0.35);
+    color:#3d8b40;width:155px;height:68px;transform:rotate(-1deg) translate(2px,4px);}
+
+  .bubble .b-title{font-size:13px;font-weight:650;line-height:1.32;position:relative;z-index:1;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;}
+  .bubble .b-date{font-size:10.5px;opacity:.5;font-weight:500;margin-top:3px;position:relative;z-index:1;}
+
+  /* 项目卡片 */
+  .proj-card{background:rgba(255,255,255,0.55);border-radius:18px;padding:14px;margin-bottom:10px;
+    border-left:4px solid;box-shadow:0 2px 12px rgba(160,140,180,0.06);cursor:pointer;transition:.2s;}
+  .proj-card:hover{transform:translateX(4px);box-shadow:0 6px 20px rgba(160,140,180,0.12);}
+  .proj-card .pc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+  .proj-card .pc-tag{font-size:10.5px;padding:3px 10px;border-radius:10px;font-weight:600;}
+  .proj-card .pc-title{font-size:14px;font-weight:700;color:#4a3a52;}
+  .proj-card .pc-data{display:flex;gap:12px;font-size:11.5px;color:#7a6a82;margin-top:6px;flex-wrap:wrap;}
+  .proj-card .pc-note{font-size:11px;color:#9988a4;margin-top:5px;padding-top:6px;border-top:1px solid rgba(0,0,0,0.04);line-height:1.35;}
+
+  /* 底部栏 */
+  .bottombar{position:absolute;bottom:0;left:0;right:0;height:84px;
+    background:linear-gradient(to top,rgba(245,240,248,0.98),rgba(245,240,248,0.85));
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    display:flex;justify-content:space-around;align-items:center;padding-bottom:12px;
+    border-top:1px solid rgba(255,255,255,0.6);}
+  .bb-item{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:6px 12px;border-radius:14px;transition:.2s;}
+  .bb-item:active{transform:scale(0.92);}
+  .bb-icon{font-size:23px;width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;}
+  .bb-icon.primary{background:linear-gradient(145deg,#e8c0d0,#d4a8bc);box-shadow:0 4px 14px rgba(212,168,188,0.35);}
+  .bb-icon.secondary{background:rgba(255,255,255,0.6);box-shadow:0 2px 8px rgba(180,160,190,0.1);}
+  .bb-label{font-size:10.5px;font-weight:600;color:#7a6a82;}
+
+  /* 标签 */
+  .tag-pill{font-size:11px;padding:5px 12px;border-radius:10px;font-weight:600;
+    background:rgba(255,255,255,0.5);color:#6a5a7a;border:1px solid rgba(200,180,210,0.25);}
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <!-- 状态栏 -->
+  <div class="statusbar">
+    <span>11:36</span>
+    <span>📶 📡 🔋</span>
+  </div>
+  
+  <!-- 顶部 -->
+  <div class="topbar">
+    <button class="menu-btn">☰</button>
+    <h1>灵感中枢</h1>
+    <button class="icon-btn">🔄</button>
+    <button class="icon-btn">🌙</button>
+    <button class="icon-btn">⚙️</button>
+  </div>
+  
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tag-pill">📰 信息摄入 · Newsletter</div>
+    <div class="tab active">✨ 灵光一现</div>
+  </div>
+  <div style="padding:0 16px;">
+    <div class="tag-pill" style="margin-top:8px;">📔 每日日记</div>
+  </div>
+  
+  <!-- 内容 -->
+  <div class="content">
+    <div class="section-title">✨ 灵光一现概览</div>
+    
+    <!-- 气泡区 -->
+    <div class="card" style="padding:18px 12px;">
+      <div class="bubble-area">
+        <div class="bubble st1"><div class="b-title">10分钟搭建属于自己的工作台</div><div class="b-date">2026-07-29</div></div>
+        <div class="bubble st0"><div class="b-title">如何快速学习AI</div><div class="b-date">2026-07-28</div></div>
+        <div class="bubble st0"><div class="b-title">AI时代要有的心态</div><div class="b-date">2026-07-28</div></div>
+        <div class="bubble st1"><div class="b-title">只有河南－一种文明的浪漫</div><div class="b-date">2026-07-24</div></div>
+        <div class="bubble st1"><div class="b-title">为什么大家热爱胖东来？</div><div class="b-date">2026-07-21</div></div>
+        <div class="bubble st0"><div class="b-title">开始做自媒体-我的收获</div><div class="b-date">2026-07-14</div></div>
+        <div class="bubble st0"><div class="b-title">如何判断一个人</div><div class="b-date">2026-07-06</div></div>
+        <div class="bubble st2"><div class="b-title">如何早睡，为什么熬夜</div><div class="b-date">2026-06-26</div></div>
+        <div class="bubble st2"><div class="b-title">追求高效生活可能是个陷阱</div><div class="b-date">2026-06-21</div></div>
+      </div>
+    </div>
+    
+    <!-- 日历+质感 -->
+    <div class="section-title" style="margin-top:16px;">📓 每日日记概览</div>
+    <div class="card">
+      <h3 style="font-size:14px;margin-bottom:10px;color:#5a4a62;">本月日历</h3>
+      <div class="cal-grid">
+        <div class="cal-head">一</div><div class="cal-head">二</div><div class="cal-head">三</div><div class="cal-head">四</div><div class="cal-head">五</div><div class="cal-head">六</div><div class="cal-head">日</div>
+        <div class="cal-d has">1</div><div class="cal-d has">2</div><div class="cal-d has">3</div><div class="cal-d has">4</div><div class="cal-d has">5</div><div class="cal-d has">6</div><div class="cal-d has">7</div>
+        <div class="cal-d has">8</div><div class="cal-d has">9</div><div class="cal-d has">10</div><div class="cal-d has">11</div><div class="cal-d has">12</div><div class="cal-d has">13</div><div class="cal-d has">14</div>
+        <div class="cal-d has">15</div><div class="cal-d has">16</div><div class="cal-d has">17</div><div class="cal-d has">18</div><div class="cal-d has">19</div><div class="cal-d has">20</div><div class="cal-d has">21</div>
+        <div class="cal-d has">22</div><div class="cal-d has">23</div><div class="cal-d has">24</div><div class="cal-d has">25</div><div class="cal-d has">26</div><div class="cal-d has">27</div><div class="cal-d has">28</div>
+        <div class="cal-d today">29</div><div class="cal-d">30</div><div class="cal-d">31</div>
+      </div>
+      
+      <h3 style="font-size:14px;margin:14px 0 8px;color:#5a4a62;">近期质感打分</h3>
+      <div class="mood-row">
+        <div class="mood-item"><div class="mood-date">2026-07-28</div><div class="mood-text">🎯 6·放松肩颈，work buddy尝试</div><div class="mood-energy">⚡ 录音、拍视频</div></div>
+        <div class="mood-item"><div class="mood-date">2026-07-27</div><div class="mood-text">🎯 7</div></div>
+        <div class="mood-item"><div class="mood-date">2026-07-26</div><div class="mood-text">🎯 9</div></div>
+      </div>
+    </div>
+    
+    <!-- 项目进度 -->
+    <div class="section-title" style="margin-top:16px;">🚀 项目进度</div>
+    <div class="proj-card" style="border-color:#d4a870;">
+      <div class="pc-top">
+        <span class="pc-tag" style="background:rgba(255,248,225,0.85);color:#b8860b;">🔥 进行中</span>
+        <span style="font-size:11.5px;color:#9988a4;">07-24</span>
+      </div>
+      <div class="pc-title">只有河南－一种文明的浪漫</div>
+    </div>
+    
+    <div class="proj-card" style="border-color:#3d8b40;">
+      <div class="pc-top">
+        <span class="pc-tag" style="background:rgba(232,248,232,0.85);color:#3d8b40;">✅ 已完成</span>
+        <span style="font-size:11.5px;color:#9988a4;">07-22</span>
+      </div>
+      <div class="pc-title">如何早睡，为什么熬夜</div>
+      <div class="pc-data"><span>▶️ 1177</span> <span>❤️ 68</span> <span>⭐ 48</span></div>
+      <div class="pc-note">📝 同一个视频发了两遍，第二遍效果更好。这个视频是建立在影视飓风剪辑视频课程...</div>
+    </div>
+    
+    <div class="proj-card" style="border-color:#3d8b40;">
+      <div class="pc-top">
+        <span class="pc-tag" style="background:rgba(232,248,232,0.85);color:#3d8b40;">✅ 已完成</span>
+        <span style="font-size:11.5px;color:#9988a4;">06-21</span>
+      </div>
+      <div class="pc-title">追求高效生活可能是个陷阱</div>
+      <div class="pc-data"><span>▶️ 333</span> <span>❤️ 27</span> <span>⭐ 9</span></div>
+    </div>
+  </div>
+  
+  <!-- 底部栏 -->
+  <div class="bottombar">
+    <div class="bb-item"><div class="bb-icon primary">⚡</div><div class="bb-label">灵光一现</div></div>
+    <div class="bb-item"><div class="bb-icon secondary">📝</div><div class="bb-label">新建日记</div></div>
+    <div class="bb-item"><div class="bb-icon secondary">⏲️</div><div class="bb-label">计时器</div></div>
+    <div class="bb-item"><div class="bb-icon secondary">🤖</div><div class="bb-label">唤起 AI</div></div>
+  </div>
+</div>
+
+</body>
+</html>

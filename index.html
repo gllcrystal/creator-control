@@ -947,8 +947,8 @@ async function loadReview(){
         like:parsed.like||pv(p.properties[F.like]||p.properties["点赞"]),
         fav:parsed.fav||pv(p.properties[F.fav]||p.properties["收藏"]),
         cmt:parsed.cmt||pv(p.properties[F.cmt]||p.properties["评论"]),
-        note:pv(p.properties[F.note]||p.properties["复盘笔记"]||p.properties["整体质感"]||""),
-        date:(pv(p.properties[F.date])||pv(p.properties["Date Idea时间"])||pv(p.properties["实际完成"])||pv(p.properties["创建时间"])||"").slice(5),
+        note:pv(p.properties["自我总结"]||p.properties[F.note]||p.properties["复盘笔记"]||p.properties["整体质感"]||""),
+        date:(pv(p.properties["实际完成"])||pv(p.properties["Date Idea时间"])||pv(p.properties[F.date])||pv(p.properties["创建时间"])||"").slice(5),
         pid:p.id};
     });
     box.innerHTML=state.review.length?state.review.map(reviewHTML).join(""):emptyState("暂无已发布复盘","完成后自动归入此处");
@@ -1055,7 +1055,11 @@ document.getElementById("hamburger").onclick=openSidebar;scrim.onclick=closeSide
 const ovInsp=document.getElementById("ovInsp"),mInsp=document.getElementById("mInsp");
 function openInsp(){ovInsp.classList.add("show");mInsp.classList.add("show");setTimeout(()=>document.getElementById("inspInput").focus(),200);}
 function closeInsp(){ovInsp.classList.remove("show");mInsp.classList.remove("show");}
-document.getElementById("qIdea").onclick=openInsp;ovInsp.onclick=closeInsp;
+document.getElementById("qIdea").onclick=()=>{
+  const raw=(cfg.dbs["idea"]||"").trim();
+  if(raw){window.open("https://www.notion.so/"+raw.replace(/-/g,''),"_blank");toast("打开 Notion 记录灵感 ✏️");}
+  else {toast("未配置灵感库","⚙️");openSettings();}
+};
 document.getElementById("inspCancel").onclick=closeInsp;
 document.getElementById("inspSave").onclick=async()=>{const v=document.getElementById("inspInput").value.trim();if(!v){toast("写点什么再保存吧");return;}
   if(cfg.dbs.idea){const F=f("idea");const ok=await notionCreate("idea",{[F.title]:{title:[{text:{content:v}}]},[F.status]:{select:{name:"初步想法"}}});toast(ok?"已同步写入 Notion 灵感库 ✨":"写入失败，请检查配置","✓");}
