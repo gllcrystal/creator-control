@@ -119,7 +119,7 @@
   /* 马卡龙板块色 */
   .card-lavender{background:linear-gradient(135deg,#EFE6FB,#E6D6F6);border-color:rgba(155,111,207,0.3);}
   .card-coral{background:linear-gradient(135deg,#FFE7EC,#FFD9E0);border-color:rgba(233,110,139,0.32);}
-  .card-pink{background:linear-gradient(135deg,#FCE1EE,#FACDE0);border-color:rgba(215,127,172,0.35);}
+  .card-pink{background:linear-gradient(135deg,#FFF0F3,#FFE4EC);border-color:rgba(232,160,180,0.35);}
   .card-yellow{background:linear-gradient(135deg,#FFF6E0,#FFEFC8);border-color:rgba(234,180,58,0.35);}
   .card-mint{background:linear-gradient(135deg,#E6F9ED,#D4F2DE);border-color:rgba(84,168,119,0.3);}
   .card-sky{background:linear-gradient(135deg,#E4F3FC,#D2E9F8);border-color:rgba(91,166,216,0.3);}
@@ -129,7 +129,7 @@
   .tag-ico{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:14px;color:#fff;}
   .row{display:flex;align-items:center;gap:12px;}
 
-  .quote-card{background:linear-gradient(120deg,var(--primary),var(--purple));color:#fff;border:none;position:relative;overflow:hidden;}
+  .quote-card{background:linear-gradient(120deg,#E8A0B8,#D77FAC);color:#fff;border:none;position:relative;overflow:hidden;}
   .quote-card::after{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;background:rgba(255,255,255,.12);border-radius:50%;}
   .quote-card .q{font-size:19px;font-weight:600;line-height:1.5;max-width:80%;position:relative;z-index:1;}
   .quote-card .src{margin-top:12px;font-size:13px;opacity:.85;position:relative;z-index:1;}
@@ -498,7 +498,6 @@
               <button class="btn sm" data-jump="notion" data-target="intake">打开 Notion 信息摄入库 ↗</button>
             </div>
             <div class="card">
-              <div class="desc">仅展示 Notion 信息摄入库中「今天」录入的条目 · 完整聚合（标题 / 类型 / 链接 / 标签 / 重要度）</div>
               <div class="bubble-grid" id="intakeList"></div>
             </div>
           </div>
@@ -1132,9 +1131,9 @@ async function loadIntake(){
   const box=document.getElementById("intakeList");
   if(cfg.sample){
     const td=todayStr();
-    const s=[{title:"GitHub · llama.cpp 新 release 支持本地多模态",type:"GitHub",url:"https://github.com/ggerganov/llama.cpp",tags:["AI","代码"],level:"高",date:td},
-      {title:"小红书 · 知识博主起号 30 天增长拆解",type:"小红书",url:"https://www.xiaohongshu.com",tags:["内容","增长"],level:"中",date:td},
-      {title:"AI 资讯 · 长上下文分析能力更新",type:"资讯",tags:["AI","行业"],level:"高",date:td}];
+    const s=[{title:"GitHub · llama.cpp 新 release 支持本地多模态",type:"GitHub",url:"https://github.com/ggerganov/llama.cpp",tags:["AI","代码"],level:"高",date:td,body:"llama.cpp 最新版本新增对本地多模态模型（视觉+文本）的推理支持，无需 GPU 即可在普通笔记本运行 LLaVA 等模型。主要改进包括：1) 新增 CLIP 视觉编码器后端 2) 支持 mmproj 格式权重 3) 优化了跨层注意力显存占用。对创作者意味着可以用免费工具本地跑 AI 图像理解，降低内容生产成本。"},
+      {title:"小红书 · 知识博主起号 30 天增长拆解",type:"小红书",url:"https://www.xiaohongshu.com",tags:["内容","增长"],level:"中",date:td,body:"某知识类博主从 0 到 1 万粉的完整路径拆解：\n\n第 1-7 天：定位测试期——发布 5 条不同风格内容，数据最好的「反常识科普」方向留存率最高。\n第 8-15 天：爆款复制期——对标头部账号的选题结构，保持日更，单条最高 2.3 万赞。\n第 16-30 天：变现探索期——开通橱窗带货，首周 GMV 3400 元。核心发现：开头 3 秒的反常识钩子是完播率的关键变量。"},
+      {title:"AI 资讯 · 长上下文分析能力更新",type:"资讯",tags:["AI","行业"],level:"高",date:td,body:"多家大模型厂商本周密集发布长上下文能力升级：\n• Claude 支持到 200K token 且保持高召回率\n• Gemini 1.5 Pro 长窗口推理延迟下降 40%\n• 国产模型 Kimi 挑战百万级上下文\n\n对创作者的影响：可以用 AI 一次性分析整本书、长视频脚本或大量竞品文案，大幅提升研究效率。建议工作流：把竞品爆款全文丢给 AI 做结构拆解 → 提取钩子模板 → 复用到自己的脚本中。"}];
     box.innerHTML=s.map(intakeCardHTML).join("");return;
   }
   try{
